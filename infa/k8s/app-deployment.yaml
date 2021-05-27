@@ -1,0 +1,133 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-bus-depl
+  labels:
+    app: event-bus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: event-bus
+  template:
+    metadata:
+      labels:
+        app: event-bus
+    spec:
+      containers:
+      - name: event-bus
+        image: event-bus-image
+        ports:
+          - containerPort: 4000
+      - name: mogodb
+        image: mongo
+        ports:
+          - containerPort: 27017
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcd-depl
+  labels:
+    app: mcd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mcd
+  template:
+    metadata:
+      labels:
+        app: mcd
+    spec:
+      containers:
+      - name: mcd
+        image: mcd-image
+        ports:
+          - containerPort: 4001
+      - name: mogodb
+        image: mongo
+        ports:
+          - containerPort: 27017
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mpe-depl
+  labels:
+    app: mpe
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mpe
+  template:
+    metadata:
+      labels:
+        app: mpe
+    spec:
+      containers:
+      - name: mpe
+        image: mpe-image
+        ports:
+          - containerPort: 4002
+      - name: mogodb
+        image: mongo
+        ports:
+          - containerPort: 27017
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mtv-depl
+  labels:
+    app: mtv
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mtv
+  template:
+    metadata:
+      labels:
+        app: mtv
+    spec:
+      containers:
+      - name: mtv
+        image: mtv-image
+        ports:
+          - containerPort: 4003
+      - name: mogodb
+        image: mongo
+        ports:
+          - containerPort: 27017
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users-depl
+  labels:
+    app: users
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: users
+  template:
+    metadata:
+      labels:
+        app: users
+    spec:
+      containers:
+      - name: users
+        image: users-image
+        ports:
+          - containerPort: 4004
+      - name: mogodb
+        image: mongo
+        ports:
+          - containerPort: 27017
