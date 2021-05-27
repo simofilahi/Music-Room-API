@@ -11,7 +11,7 @@ Project is created with:
 ## API Documentation
 See the [Getting Started](https://localhost/) document.
 
-## Setup dev environment
+## Setup Dev environment
 
 Follow these instructions to run this project locally on MacOS:
 
@@ -31,6 +31,7 @@ $ brew install skaffold //install skaffold
 ```
 
 - Create the vm machine:
+> NOTE: You have to install a hypervisor if is not installed in your machine. 
 ```
 $ minikube start //create vm or start running installed machine.
 ```
@@ -47,4 +48,8 @@ $ minikube ip
 ```
 
 Enjoy development 🎉🎉🎉🎉
+
+# Dev Architecture
+
+![alt text](https://github.com/simofilahi/Music-Room-API/blob/main/assets/dev-architecture.png)
 
