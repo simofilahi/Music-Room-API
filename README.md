@@ -38,13 +38,13 @@ $ minikube start //create vm or start running installed machine.
 
 - Inside codebase directory run:
 ```
-$ skaffold dev
+$ skaffold dev //automate deployment locally
 ```
 
 - Get the ip address for testing purpose:
 
 ```
-$ minikube ip
+$ minikube ip // get the ip @ of vm machine
 ```
 
 Enjoy development 🎉🎉🎉🎉
