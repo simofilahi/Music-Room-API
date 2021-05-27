@@ -46,5 +46,5 @@ $ skaffold dev
 $ minikube ip
 ```
 
-Enjoy devlopment 🎉🎉🎉🎉
+Enjoy development 🎉🎉🎉🎉
 
