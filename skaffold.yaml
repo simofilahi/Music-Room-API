@@ -1,0 +1,52 @@
+apiVersion: skaffold/v2beta16
+kind: Config
+metadata:
+  name: musicroomapp
+build:
+  artifacts:
+  - image: event-bus-image
+    context: event-bus-service
+    docker:
+      dockerfile: Dockerfile
+    sync:
+      manual: 
+      - src: /src/**/*.js
+        dest: "."
+  - image: mcd-image
+    context: mcd-service
+    docker:
+      dockerfile: Dockerfile
+    sync:
+       manual: 
+        - src: /src/**/*.js
+          dest: "."
+  - image: mpe-image
+    context: mpe-service
+    docker:
+      dockerfile: Dockerfile
+    sync:
+       manual: 
+        - src: /src/**/*.js
+          dest: "."
+  - image: mtv-image
+    context: mtv-service
+    docker:
+      dockerfile: Dockerfile
+    sync:
+       manual: 
+        - src: /src/**/*.js
+          dest: "."
+  - image: users-image
+    context: users-service
+    docker:
+      dockerfile: Dockerfile
+    sync:
+       manual: 
+        - src: /src/**/*.js
+          dest: "."
+deploy:
+  kubectl:
+    manifests:
+    - infa/k8s/app-deployment.yaml
+    - infa/k8s/app-ingress.yaml
+    - infa/k8s/app-service.yaml
