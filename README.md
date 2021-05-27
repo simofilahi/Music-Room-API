@@ -44,7 +44,7 @@ $ skaffold dev //automate deployment locally
 - Get the ip address for testing purpose:
 
 ```
-$ minikube ip // get the ip @ of vm machine
+$ minikube ip //get the ip @ of vm machine
 ```
 
 Enjoy development 🎉🎉🎉🎉
