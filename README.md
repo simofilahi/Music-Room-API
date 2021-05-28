@@ -15,23 +15,23 @@ See the [Getting Started](https://localhost/) document.
 
 Follow these instructions to run this project locally on MacOS:
 
-- Minikube is an open source tool that enables you to run Kubernetes on your laptop or other local machine, [Read More](https://kubernetes.io/docs/tutorials/hello-minikube/):
+- Minikube is an open source tool that enables you to run Kubernetes on your laptop or other local machine [Read More](https://kubernetes.io/docs/tutorials/hello-minikube/):
 ```
 $ brew install minikube //install minikube
 ```
 
-- The kubectl command line tool lets you control Kubernetes clusters, [Read More](https://kubernetes.io/docs/tasks/tools/):
+- The kubectl command line tool lets you control Kubernetes clusters [Read More](https://kubernetes.io/docs/tasks/tools/):
 ```
 $ brew install kubernetes-cli //install kubernetes-cli
 ```
 
-- Skaffold is a command line tool that facilitates continuous development for Kubernetes, [Read More](https://skaffold.dev/): 
+- Skaffold is a command line tool that facilitates continuous development for Kubernetes [Read More](https://skaffold.dev/):
 ```
 $ brew install skaffold //install skaffold
 ```
 
-- Create the vm machine:
-> NOTE: You have to install a hypervisor if is not installed in your machine. 
+- Create the vm machine: 
+> NOTE: You have to install a hypervisor if is not installed in your machine.
 ```
 $ minikube start //create vm or start running installed machine.
 ```
