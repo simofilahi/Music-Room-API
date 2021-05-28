@@ -36,6 +36,11 @@ $ brew install skaffold
 $ minikube start
 ```
 
+- Enable the ingress
+```
+$ minikube addons enable ingress
+```
+
 - Inside codebase directory run:
 ```
 $ skaffold dev
