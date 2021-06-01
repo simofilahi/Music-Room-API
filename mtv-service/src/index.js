@@ -9,8 +9,8 @@ dotenv.config({ path: "config/config.env" });
 const Port = process.env.PORT;
 
 // TEST ROUTE
-app.get("/api/mtv", (req, res) => {
-  res.send("Hello from mtv!");
+app.get("/api/mcd", (req, res) => {
+  res.send("Hello from mcd!");
 });
 
 // START SERVER
