@@ -9,23 +9,27 @@ spec:
   rules:
   - http:
       paths:
-      - path: /api/event-bus
-        backend:
-          serviceName: event-bus-service
-          servicePort: 4000
-      - path: /api/mcd
-        backend:
-          serviceName: mcd-service
-          servicePort: 4001
-      - path: /api/mpe
-        backend:
-          serviceName: mpe-service
-          servicePort: 4002
-      - path: /api/mtv
-        backend:
-          serviceName: mtv-service
-          servicePort: 4003
+      # - path: /api/event-bus
+      #   backend:
+      #     serviceName: event-bus-service
+      #     servicePort: 4000
+      # - path: /api/mcd
+      #   backend:
+      #     serviceName: mcd-service
+      #     servicePort: 4001
+      # - path: /api/mpe
+      #   backend:
+      #     serviceName: mpe-service
+      #     servicePort: 4002
+      # - path: /api/mtv
+      #   backend:
+      #     serviceName: mtv-service
+      #     servicePort: 4003
       - path: /api/users
+        backend:
+          serviceName: users-service
+          servicePort: 4004
+      - path: /api/auth/register
         backend:
           serviceName: users-service
           servicePort: 4004

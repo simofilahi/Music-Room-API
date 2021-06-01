@@ -4,38 +4,38 @@ metadata:
   name: musicroomapp
 build:
   artifacts:
-  - image: event-bus-image
-    context: event-bus-service
-    docker:
-      dockerfile: Dockerfile
-    sync:
-      manual: 
-      - src: /src/**/*.js
-        dest: "."
-  - image: mcd-image
-    context: mcd-service
-    docker:
-      dockerfile: Dockerfile
-    sync:
-       manual: 
-        - src: /src/**/*.js
-          dest: "."
-  - image: mpe-image
-    context: mpe-service
-    docker:
-      dockerfile: Dockerfile
-    sync:
-       manual: 
-        - src: /src/**/*.js
-          dest: "."
-  - image: mtv-image
-    context: mtv-service
-    docker:
-      dockerfile: Dockerfile
-    sync:
-       manual: 
-        - src: /src/**/*.js
-          dest: "."
+  # - image: event-bus-image
+  #   context: event-bus-service
+  #   docker:
+  #     dockerfile: Dockerfile
+  #   sync:
+  #     manual: 
+  #     - src: /src/**/*.js
+  #       dest: "."
+  # - image: mcd-image
+  #   context: mcd-service
+  #   docker:
+  #     dockerfile: Dockerfile
+  #   sync:
+  #      manual: 
+  #       - src: /src/**/*.js
+  #         dest: "."
+  # - image: mpe-image
+  #   context: mpe-service
+  #   docker:
+  #     dockerfile: Dockerfile
+  #   sync:
+  #      manual: 
+  #       - src: /src/**/*.js
+  #         dest: "."
+  # - image: mtv-image
+  #   context: mtv-service
+  #   docker:
+  #     dockerfile: Dockerfile
+  #   sync:
+  #      manual: 
+  #       - src: /src/**/*.js
+  #         dest: "."
   - image: users-image
     context: users-service
     docker:
@@ -47,6 +47,9 @@ build:
 deploy:
   kubectl:
     manifests:
+    - infa/k8s/storageClass.yaml
+    - infa/k8s/db-pv.yaml
+    - infa/k8s/db-pv-claim.yaml
     - infa/k8s/app-deployment.yaml
     - infa/k8s/app-ingress.yaml
     - infa/k8s/app-service.yaml

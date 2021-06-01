@@ -1,7 +1,6 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const app = express();
-const axios = require("axios");
 
 // LOAD ENV VARS
 dotenv.config({ path: "config/config.env" });
@@ -10,8 +9,8 @@ dotenv.config({ path: "config/config.env" });
 const Port = process.env.PORT;
 
 // TEST ROUTE
-app.get("/api/users", (req, res) => {
-  res.send("Hello from users!");
+app.get("/api/mcd", (req, res) => {
+  res.send("Hello from mcd!");
 });
 
 // START SERVER
