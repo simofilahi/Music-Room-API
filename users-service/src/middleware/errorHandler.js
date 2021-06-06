@@ -2,7 +2,7 @@ const errorResponse = require("../helper/errorResponse");
 
 const errorHandler = (err, req, res, next) => {
   let error = err;
-
+  console.log(err);
   if (error?.name == "JsonWebTokenError")
     error = new errorResponse({ status: 401, message: "Unauthorized" });
   if (error?.code === 11000)

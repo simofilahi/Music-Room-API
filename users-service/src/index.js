@@ -4,7 +4,7 @@ const app = express();
 const bodyParser = require("body-parser");
 
 // LOAD ENV VARS
-dotenv.config({ path: "config/config.env" });
+dotenv.config({ path: ".env" });
 
 // APP PORT
 const PORT = process.env.PORT;
@@ -16,8 +16,21 @@ require("./config/connection");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// AUTHENTICATION
-require("./config/passport-local");
+app.set("view engine", "pug");
+
+// CORS
+// CORS ALLOW INCOMING REQUEST
+app.use(function (req, res, next) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Max-Age", "1800");
+  res.setHeader("Access-Control-Allow-Headers", "content-type");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "PUT, POST, GET, DELETE, PATCH, OPTIONS"
+  );
+  next();
+});
 
 // ROUTES
 const userRoutes = require("./routes/users");
