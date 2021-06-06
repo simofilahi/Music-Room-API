@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const saltRounds = 10;
+
 const userSchema = mongoose.Schema({
   username: { type: String },
   email: {
@@ -14,17 +15,20 @@ const userSchema = mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, "password is required"],
     min: [8, "Password must be greather than 8 char"],
     max: [24, "Password must be smaller than 24 char"],
   },
-  isVerified: { type: Boolean, default: 0 },
+  picture: { type: String },
+  isVerified: { type: Boolean, default: false },
+  forgotPass: { code: Number, exp: Date },
+  mailVer: { code: Number, exp: Date },
   token: { type: String, unique: true },
 });
 
 // HASH PASSWORD
 userSchema.pre("save", async function (next) {
-  this.password = await bcrypt.hash(this.password, saltRounds);
+  if (this.password)
+    this.password = await bcrypt.hash(this.password, saltRounds);
   next();
 });
 
@@ -39,6 +43,7 @@ userSchema.methods.generateToken = async function () {
 
 // CHECK INCOMING PASSWORD IS MATCHED WITH THE PASSWORD IN DB
 userSchema.methods.validPassword = async function (password) {
+  console.log("holla");
   const match = await bcrypt.compare(password, this.password);
 
   return match;

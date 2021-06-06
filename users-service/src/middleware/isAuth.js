@@ -19,7 +19,6 @@ const isAuth = asyncHandler(async (req, res, next) => {
 
   // ADD USER ID TO REQ OBJECT
   req.user = { _id: user._id };
-  console.log(req.user._id);
   next();
 });
 
