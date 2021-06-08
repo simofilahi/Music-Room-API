@@ -13,4 +13,7 @@ router.post("/auth/google", userController.googleAuth);
 // USER INFOS
 router.get("/me", isAuth, userController.me);
 
+// EDIT USER INFOS
+router.put("/user/edit", isAuth, userController.edit);
+
 module.exports = router;

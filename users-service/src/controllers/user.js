@@ -2,6 +2,9 @@ const User = require("../models/User");
 const asyncHandler = require("../helper/asyncHandler");
 const errorResponse = require("../helper/errorResponse");
 const { OAuth2Client } = require("google-auth-library");
+const hashPassword = require("../helper/hashPassword");
+const genCode = require("../helper/genCode");
+const sendConfirmationEmail = require("../helper/sendEmailConfirmation");
 
 //@DESC REGISTER A USER
 //@ROUTE POST /api/auth/register
@@ -14,14 +17,31 @@ exports.register = asyncHandler(async (req, res, next) => {
   if (!password)
     next(new errorResponse({ status: "400", message: "Bad Request" }));
 
+  // GENERATE RANDOM CONFIRMATION CODE
+  const code = genCode();
+
   // CREATE DOC
   const user = new User({
     email,
-    password,
+    password: await hashPassword(password),
+    confirmationCode: code,
   });
 
   // SAVE DOC
   const data = await user.save();
+
+  // MAIL MESSAGE
+  const message = {
+    from: process.env.EMAIL,
+    to: email,
+    subject: "Please confirm your account",
+    html: `<h1>Email Confirmation</h1>
+        <h4>${code}</h4>
+        </div>`,
+  };
+
+  // SEND VERIFICATION EMAIL
+  await sendConfirmationEmail(message);
 
   // SEND RESPONSE
   if (data) res.status(201).send({ success: true });
@@ -37,16 +57,20 @@ exports.login = asyncHandler(async (req, res, next) => {
   // SEARCH FOR USER IN DB
   const user = await User.findOne({ email });
 
-  // UNAUTHORIZED IF DOESN'T EXIST
+  // USER DOESN'T EXIST IN DB
   if (!user)
     next(new errorResponse({ status: "401", message: "Unauthorized" }));
+
+  // VERIFY IS ACTIVE USER
+  if (!user.isVerified)
+    return next(new errorResponse({ status: "401", message: "Unauthorized" }));
 
   // VERIFY PASSWORD
   const match = await user.validPassword(password);
 
   // UNAUTHORIZED IF PASS NOT VALID
   if (!match)
-    next(new errorResponse({ status: "401", message: "Unauthorized" }));
+    return next(new errorResponse({ status: "401", message: "Unauthorized" }));
 
   // GENERATE TOKEN
   await user.generateToken();
@@ -55,12 +79,17 @@ exports.login = asyncHandler(async (req, res, next) => {
   if (user) res.status(201).send({ success: true, data: user });
 });
 
+//@DESC GET USER INFORAMTIONS
+//@ROUTE POST /api/me/
+//@ACCESS PRIVATE
 exports.me = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
   const { _id } = req.user;
 
-  console.log(_id);
+  // SEARCH FOR USER IN DB
   const user = await User.findOne({ _id }).select("-password");
 
+  // SEND RESPONSE
   res.status(200).send({ success: true, data: user });
 });
 
@@ -96,7 +125,6 @@ exports.googleAuth = asyncHandler(async (req, res, next) => {
 
     // SEND RESPONSE
     if (data) {
-      console.log("test");
       return res.status(201).send({ success: true });
     }
   }
@@ -106,4 +134,25 @@ exports.googleAuth = asyncHandler(async (req, res, next) => {
 
   // SEND RESPONSE
   res.status(200).send({ success: true, data: user });
+});
+
+//@DESC REGISTER OR LOGIN A USER BY GOOGLE OAUTH
+//@ROUTE POST /api/auth/google
+//@ACCESS PRIVATE
+exports.edit = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { email, username, password } = req.body;
+  const { _id } = req.user;
+
+  // UPDATE USER DOC
+  const data = await User.updateOne(
+    { _id },
+    { email, username, password: await hashPassword(password) }
+  );
+
+  // ERROR RESPONSE
+  if (!data) next(new errorResponse({ success: "", message: "" }));
+
+  // SUCCESS RESPONSE
+  res.status(200).send({ success: true, data: data });
 });

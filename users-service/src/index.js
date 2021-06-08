@@ -33,7 +33,7 @@ app.use(function (req, res, next) {
 });
 
 // ROUTES
-const userRoutes = require("./routes/users");
+const userRoutes = require("./routes/user");
 
 // ERROR HANDLER MIDDLEWARE
 const errorHandler = require("./middleware/errorHandler");
