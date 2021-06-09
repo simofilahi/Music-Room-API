@@ -16,8 +16,6 @@ require("./config/connection");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.set("view engine", "pug");
-
 // CORS
 // CORS ALLOW INCOMING REQUEST
 app.use(function (req, res, next) {
