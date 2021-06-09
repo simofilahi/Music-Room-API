@@ -9,7 +9,7 @@ Project is created with:
 * Mongodb
 
 ## API Documentation
-See the [Getting Started](https://localhost/) document.
+See the [Getting Started](https://documenter.getpostman.com/view/10811880/TzY68Z8M) document.
 
 ## Setup Dev environment
 
