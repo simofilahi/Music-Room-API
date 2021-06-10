@@ -15,6 +15,18 @@ const playListSchema = new Schema({
     minlength: [1, "desc should not be less than 1 char"],
     maxlength: [255, "desc should not be greater than 24 char"],
   },
+  musicPreference: {
+    type: Array,
+    // enum: ["Pop", "Jaz", "Classical", "Dance"],
+  },
+  tracks: [
+    {
+      name: { type: String, required: true },
+    },
+  ],
+  visbility: {
+    type: String,
+  },
 });
 
-module.exports = mongoose.module("PlayList", playListSchema);
+module.exports = mongoose.model("PlayList", playListSchema);
