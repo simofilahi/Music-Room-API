@@ -3,13 +3,13 @@ const dotenv = require("dotenv");
 const app = express();
 
 // LOAD ENV VARS
-dotenv.config({ path: "config/config.env" });
+dotenv.config({ path: ".env" });
 
 // APP PORT
 const Port = process.env.PORT;
 
 // TEST ROUTE
-app.get("/api/mcd", (req, res) => {
+app.get("/api/mpe", (req, res) => {
   res.send("Hello from mcd!");
 });
 

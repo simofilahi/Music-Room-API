@@ -12,6 +12,9 @@ const Port = process.env.PORT;
 // DB CONNECTION
 require("./config/connection");
 
+// SPOTIFY SETUP
+require("./config/spotify_config");
+
 // PARSER
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
