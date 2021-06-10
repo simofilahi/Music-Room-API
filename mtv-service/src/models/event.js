@@ -11,6 +11,16 @@ const eventSchema = new mongoose.Schema({
     type: String,
     maxlength: [255, "Desc should not be longer than 255 char"],
   },
+  musicPreference: {
+    type: Array,
+    // enum: ["Pop", "Jaz", "Classical", "Dance"],
+  },
+  playlist: [
+    {
+      trackId: String,
+      trackName: String,
+    },
+  ],
 });
 
 module.exports = mongoose.model("Event", eventSchema);
