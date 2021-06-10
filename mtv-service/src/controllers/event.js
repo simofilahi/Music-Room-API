@@ -11,21 +11,16 @@ exports.createEvent = asyncHandler(async (req, res, next) => {
     desc,
   });
 
-  spotifyApi
-    .getAudioFeaturesForTracks([
-      "4iV5W9uYEdYUVa79Axb7Rh",
-      "3Qm86XLflmIXVm1wcwkgDK",
-    ])
-    .then(
-      function (data) {
-        console.log(data.body);
-      },
-      function (err) {
-        done(err);
-      }
-    );
+  const data = await spotifyApi.getAudioFeaturesForTracks([
+    "4iV5W9uYEdYUVa79Axb7Rh",
+    "3Qm86XLflmIXVm1wcwkgDK",
+  ]);
 
-  const data = await event.save();
+  // const data = await event.save();
 
+  res.status(200).send({ success: true, data: data.body });
+});
+
+exports.track = asyncHandler((req, res, next) => {
   res.status(200).send({ success: true, data: data });
 });
