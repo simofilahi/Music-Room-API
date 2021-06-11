@@ -1,5 +1,7 @@
 const Playlist = require("../models/Playlist");
 const asyncHandler = require("../helper/asyncHandler");
+const axios = require("axios");
+const ErrorResponse = require("../helper/ErrorResponse");
 
 // @DESC CREATE A PLAYLIST
 // @ROUTE POST /api/playlist/create
@@ -23,7 +25,7 @@ exports.create = asyncHandler(async (req, res, next) => {
   // SAVE DOC
   const data = await playlist.save();
 
-  // SEND RESPONCE
+  // SEND RESPONSE
   res.status(200).send({ success: true, data: data });
 });
 
@@ -34,7 +36,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
   //   GET PLAYLISTS FROM DB
   const data = await Playlist.find({});
 
-  //   SEND RESPONCE
+  //   SEND RESPONSE
   res.status(200).send({ success: true, data: data });
 });
 
@@ -83,6 +85,96 @@ exports.getOne = asyncHandler(async (req, res, next) => {
   // GET PLAYLISTS FROM DB
   const data = await Playlist.findOne({ _id: id });
 
-  // SEND RESPONCE
+  // SEND RESPONSE
   res.status(200).send({ success: true, data: data });
 });
+
+// @DESC ADD TRACK TO PLAYLIST
+// @ROUTE POST /api/playlist/:id/add/track/
+// @ACCESS PRIVATE
+exports.addTrack = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { id } = req.params;
+  const { trackId } = req.body;
+
+  // GET TRACK INFOS
+  const track = await axios.get(`http://localhost:4005/api/tracks/${trackId}`);
+
+  // VERIFY RESPONSE STATUS
+  if (!track.status)
+    return next(new ErrorResponse({ status: 500, message: "internal error" }));
+
+  const trackInfo = track.data.data;
+
+  // ADD TRACK TO PLAYLIST
+  await Playlist.updateOne(
+    { _id: id },
+    {
+      $addToSet: {
+        tracks: {
+          trackId: trackInfo.trackId,
+          name: trackInfo.name,
+          artists: trackInfo.artists,
+          images: trackInfo.images,
+          preview_url: trackInfo.preview_url,
+          popularity: trackInfo.popularity,
+        },
+      },
+    }
+  );
+
+  // GET PLAYLIST
+  const data = await Playlist.findById({ _id: id });
+
+  // PLAYLIST DOESN'T EXIST
+  if (!data)
+    return next(
+      new ErrorResponse({ status: 404, message: "Playlilst not found" })
+    );
+
+  // SEND RESPONSE
+  res.status(200).send({ success: true, data: data });
+});
+
+// @DESC DELETE TRACKS OF A PLAYLIST
+// @ROUTE DELTE /api/playlists/:id/track
+// @ACCESS PRIVATE
+exports.deleteTrack = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { id } = req.params;
+  const { trackId } = req.body;
+
+  // DELETE TRACK
+  await Playlist.updateOne({ _id: id }, { $pull: { tracks: { trackId } } });
+
+  // GET PLAYLIST DATA
+  const data = await Playlist.findOne({ _id: id });
+
+  // PLAYLIST DOESN'T EXIST
+  if (!data)
+    return next(
+      new ErrorResponse({ status: 404, message: "Playlilst not found" })
+    );
+
+  // SEND RESPONSE
+  res.status(200).send({ succes: true, data: data });
+});
+
+// // @DESC GET TRACKS OF A PLAYLIST
+// // @ROUTE GET /api/playlists/:id/tracks
+// // @ACCESS PRIVATE
+// exports.getTracksInPlayList = asyncHandler((req, res, next) => {
+//   // VARIABLE DESTRUCTION
+//   const { id } = req.params;
+
+//   // SEARCH FOR A PLAYLIST
+//   const data = await Playlist.findById({ _id: id });
+
+//   // PLAYLIST DOESN'T EXIST
+//   if (!data)
+//     return next(
+//       new ErrorResponse({ status: 404, message: "Playlilst not found" })
+//     );
+//   // SEND RESPONSE
+//   res.status(200).send({ success: 200, data: data });
+// });

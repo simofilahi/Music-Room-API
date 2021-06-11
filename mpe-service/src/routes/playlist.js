@@ -17,6 +17,12 @@ router.post("/playlist/remove/:id", playListController.remove);
 // EDIT PLAYLIST
 router.post("/playlist/edit/:id", playListController.edit);
 
-// // ADD TRACK TO PLAY LIST
-// router.post("/playlist/track/add/:id");
+// ADD TRACK TO PLAY LIST
+router.post("/playlists/:id/track", playListController.addTrack);
+
+// REMOVE TRACK TO PLAY LIST
+router.delete("/playlists/:id/track", playListController.deleteTrack);
+
+// // GET TRACK IN A PLAYLIST
+// router.GET("/playlists/:id/tracks", playListController.getTracksInPlayList);
 module.exports = router;

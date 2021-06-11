@@ -5,7 +5,7 @@ const eventController = require("../controllers/event");
 // CREATE A EVENT
 router.post("/event/create", eventController.createEvent);
 
-router.post("/track/listen", eventController.track);
+// router.post("/track/listen", eventController.track);
 // GET TRACKS
 // router.get("/event/tracks", eventController.tracks);
 

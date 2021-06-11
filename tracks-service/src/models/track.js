@@ -3,7 +3,6 @@ const { Schema } = mongoose;
 
 const playListSchema = new Schema({
   ownerId: mongoose.Types.ObjectId,
-  invitedUsers: [],
   name: {
     type: String,
     required: true,
@@ -22,12 +21,7 @@ const playListSchema = new Schema({
   },
   tracks: [
     {
-      trackId: { type: String },
-      name: { type: String },
-      artists: { type: Array },
-      images: { type: Array },
-      preview_url: { type: String },
-      popularity: { type: Number },
+      name: { type: String, required: true },
     },
   ],
   visbility: {
