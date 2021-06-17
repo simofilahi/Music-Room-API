@@ -32,18 +32,18 @@ app.use(function (req, res, next) {
   next();
 });
 
-// ERROR MILDDLEWARE
+// HANDLING ERROR MIDDLEWARE
 const errorHandler = require("./middleware/errorHandler");
 
 // ROUTERS
-const event = require("./routes/event");
+const track = require("./routes/track");
 
-// EVENT ROUTE
-app.use("/api", event, errorHandler);
+// PLAYLIST ROUTE
+app.use("/api", track, errorHandler);
 
 // TEST ROUTE
-app.get("/api/mtv", (req, res) => {
-  res.send("Hello from mtv!");
+app.get("/api/tracks-service", (req, res) => {
+  res.send("Hello from mcd!");
 });
 
 // START SERVER
