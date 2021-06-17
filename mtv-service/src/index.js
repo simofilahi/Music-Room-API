@@ -2,6 +2,8 @@ const express = require("express");
 const dotenv = require("dotenv");
 const app = express();
 const bodyParser = require("body-parser");
+// const Events = require("./utils/events");
+// const Event = require("./utils/event");
 
 // LOAD ENV VARS
 dotenv.config({ path: ".env" });
@@ -31,6 +33,11 @@ app.use(function (req, res, next) {
   );
   next();
 });
+
+// const ev = new Event();
+
+// ev.startStreaming();
+// Events.push(ev);
 
 // ERROR MILDDLEWARE
 const errorHandler = require("./middleware/errorHandler");

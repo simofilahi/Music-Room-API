@@ -12,8 +12,11 @@
     "express": "^4.17.1",
     "mongodb": "^3.6.8",
     "mongoose": "^5.12.11",
+    "music-metadata": "^7.8.6",
     "nodemon": "^2.0.7",
-    "spotify-web-api-node": "^5.0.2"
+    "socket.io": "^4.1.2",
+    "spotify-web-api-node": "^5.0.2",
+    "throttle": "^1.0.3"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

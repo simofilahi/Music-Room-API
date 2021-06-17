@@ -4,6 +4,7 @@ const colors = require("colors");
 // DB URI
 const DB_URI = process.env.DB_URI;
 
+console.log(DB_URI);
 // DB CONNECTION
 const connect = mongoose
   .connect(DB_URI)

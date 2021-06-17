@@ -19,8 +19,17 @@ const eventSchema = new mongoose.Schema({
     {
       trackId: String,
       trackName: String,
+      preview_url: String,
     },
   ],
+  status: {
+    type: String,
+    enum: ["started", "closed"],
+  },
+  trackUrl: {
+    type: String,
+    default: null,
+  },
 });
 
 module.exports = mongoose.model("Event", eventSchema);
