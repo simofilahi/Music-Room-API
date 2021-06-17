@@ -16,7 +16,6 @@ require("./config/connection");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// CORS
 // CORS ALLOW INCOMING REQUEST
 app.use(function (req, res, next) {
   res.setHeader("Access-Control-Allow-Origin", "*");

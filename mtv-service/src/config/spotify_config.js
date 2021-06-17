@@ -2,8 +2,8 @@ const SpotifyWebApi = require("spotify-web-api-node");
 const colors = require("colors");
 
 const spotifyWebApi = new SpotifyWebApi({
-  clientId: process.env.SPOTIFY_ID,
-  clientSecret: process.env.SPOTIFY_CLIENT_ID,
+  clientId: process.env.SPOTIFY_CLIENT_ID,
+  clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
 });
 
 spotifyWebApi.clientCredentialsGrant().then(

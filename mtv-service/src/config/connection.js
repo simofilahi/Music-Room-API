@@ -7,7 +7,8 @@ const connect = mongoose
   .then(() => {
     console.log("Db connected successfuly".green);
   })
-  .catch(() => {
+  .catch((err) => {
+    console.log(err);
     console.log("Db failed to connect".red);
   });
 
