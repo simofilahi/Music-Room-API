@@ -18,6 +18,11 @@ const userSchema = mongoose.Schema(
       min: [8, "Password must be greather than 8 char"],
       max: [24, "Password must be smaller than 24 char"],
     },
+    status: {
+      type: String,
+      enum: ["online", "offline"],
+      default: "offline",
+    },
     visibility: {
       type: String,
       enum: ["Public", "Private", "OnlyFriends"],
@@ -25,9 +30,9 @@ const userSchema = mongoose.Schema(
     },
     picture: { type: String },
     isVerified: { type: Boolean, default: false },
-    forgotPass: { code: Number, exp: Date },
+    forgotPassConfCode: { type: Number },
     // confirmationCode: { code: Number, exp: Date },
-    confirmationCode: { type: Number },
+    mailConfCode: { type: Number },
     token: { type: String, unique: true },
   },
   { timestamps: true }
