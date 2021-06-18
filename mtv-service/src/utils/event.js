@@ -6,9 +6,9 @@ const mm = require("music-metadata");
 const axios = require("axios");
 const { throws } = require("assert");
 
-function Event(eventId = 0) {
+function Event(eventId = 0, playlist = []) {
   this.eventId = eventId;
-  this.playlist = [];
+  this.playlist = playlist;
   this.consumers = [];
   this.currTrack = "";
   //   event: new EventEmitter(),
@@ -50,17 +50,30 @@ function Event(eventId = 0) {
   // };
 
   this.playTrack = async function () {
-    const bitRate = await this.getBitRate();
-    const throttle = new Throttle(bitRate / 8);
-    const readable = fs.createReadStream(this.currTrack);
+    // const bitRate = await this.getBitRate();
+    // const throttle = new Throttle(bitRate / 8);
+    // const readable = fs.createReadStream(this.currTrack);
 
-    readable.pipe(throttle).on("data", (chunk) => {
-      this.broadcast(chunk);
-    });
+    // readable.pipe(throttle).on("data", (chunk) => {
+    //   this.broadcast(chunk);
+    // });
 
-    readable.pipe(throttle).on("end", () => {
-      this.nextTrack();
-    });
+    // readable.pipe(throttle).on("end", () => {
+    //   this.nextTrack();
+    // });
+    console.log(this.playlist[0].preview_url);
+    const response = await axios({
+      method: "GET",
+      url: this.playlist[0].preview_url,
+      responseType: "stream",
+    })
+      .then((response) => {
+        console.log(response.data);
+        this.broadcast(response.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   this.startStreaming = function () {
@@ -68,9 +81,12 @@ function Event(eventId = 0) {
     this.playTrack();
   };
 
-  this.broadcast = function (chunk) {
+  this.broadcast = function (data) {
+    console.log("***********");
+    console.log(data);
+    console.log("***********");
     for (consumer of this.consumers) {
-      consumer.write(chunk);
+      data.pipe(consumer);
     }
   };
 }

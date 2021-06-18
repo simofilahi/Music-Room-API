@@ -46,7 +46,7 @@ exports.getTrack = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { id } = req.params;
 
-  // GET POPULAR PLAYLIST
+  // GET TRACK
   const track = await spotifyApi.getTrack(id);
 
   // DATA HANDLING
