@@ -32,9 +32,9 @@ const userSchema = mongoose.Schema(
     isVerified: { type: Boolean, default: false },
     forgotPassConfCode: { type: Number },
     // confirmationCode: { code: Number, exp: Date },
-    mailConfCode: { type: Number, unique: true },
-    mailConfToken: { type: String, unique: true },
-    token: { type: String, unique: true },
+    mailConfCode: { type: Number },
+    mailConfToken: { type: String },
+    token: { type: String },
   },
   { timestamps: true }
 );

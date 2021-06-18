@@ -11,8 +11,8 @@ router.post("/events", eventController.createEvent);
 // ADD TRACK TO A EVENT
 router.post("/events/:id/track", eventController.addTrack);
 
-// // DELETE TRACK FROM A EVENT
-// router.delete("/events/:id/track", eventController.removeTrack);
+// DELETE TRACK FROM A EVENT
+router.delete("/events/:id/track", eventController.removeTrack);
 
 // router.post("/events/start", eventController.startEvent);
 
