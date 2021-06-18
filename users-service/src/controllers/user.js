@@ -28,10 +28,10 @@ exports.register = asyncHandler(async (req, res, next) => {
   });
 
   // GENRATE TOKEN
-  await user.generateToken();
+  await user.generateMailConfToken();
 
   // SAVE DOC
-  const data = await user.save();
+  await user.save();
 
   // MAIL MESSAGE
   const message = {
@@ -47,7 +47,7 @@ exports.register = asyncHandler(async (req, res, next) => {
   await sendConfirmationEmail(message);
 
   // SEND RESPONSE
-  if (data) res.status(201).send({ success: true, data: data });
+  res.status(201).send({ success: true, data: user });
 });
 
 //@DESC LOGIN A USER
@@ -60,14 +60,16 @@ exports.login = asyncHandler(async (req, res, next) => {
   // SEARCH FOR USER IN DB
   const user = await User.findOne({ email });
 
-  console.log(user);
   // USER DOESN'T EXIST IN DB
   if (!user)
     next(new errorResponse({ status: "401", message: "Unauthorized" }));
 
   // VERIFY IS ACTIVE USER
-  if (!user.isVerified)
-    return next(new errorResponse({ status: "401", message: "Unauthorized" }));
+  if (!user.isVerified) {
+    user.generateMailConfToken();
+    await user.save();
+    return res.status(200).send({ success: true, data: user });
+  }
 
   // VERIFY PASSWORD
   const match = await user.validPassword(password);
@@ -173,7 +175,7 @@ exports.mailConfirmation = asyncHandler(async (req, res, next) => {
   const { _id } = req.user;
 
   // SEARCH FOR THE OWNER OF CODE
-  let user = await User.findOne({ mailConfCode: code, _id });
+  let user = await User.findOne({ _id });
 
   // IF USER DOESN'T EXIST
   if (!user)
@@ -181,17 +183,26 @@ exports.mailConfirmation = asyncHandler(async (req, res, next) => {
 
   // VERIFY CONFIRMATION CODE
   if (user.mailConfCode === code) {
-    user = await user.updateOne({
+    // UPDATE DATA
+    await user.updateOne({
       $set: {
         isVerified: true,
         mailConfCode: null,
         status: "online",
+        mailConfToken: null,
       },
     });
+
+    // GET UPDATED USER DOC
+    user = await User.findOne({ _id });
+
+    // SEND RESPONSE
+    res.status(200).send({ success: "true", data: user });
   }
 
-  // SEND RESPONSE
-  res.status(200).send({ success: "true", data: user });
+  res
+    .status(400)
+    .send({ success: true, message: "verfication code is invalid" });
 });
 
 //@DESC CHANGE PASSWORD BY FORGOT PASS METHODE
