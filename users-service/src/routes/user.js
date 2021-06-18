@@ -11,13 +11,17 @@ router.post("/auth/login", userController.login);
 router.post("/auth/google", userController.googleAuth);
 
 // USER INFOS
-router.get("/me", isAuth, userController.me);
+router.get("/me", isAuth.sessionToken, userController.me);
 
 // EDIT USER INFOS
-router.put("/user/edit", isAuth, userController.edit);
+router.put("/user/edit", isAuth.sessionToken, userController.edit);
 
 // MAIL CONFIRMATION
-router.post("/user/email/confirm", isAuth, userController.mailConfirmation);
+router.post(
+  "/user/email/confirm",
+  isAuth.mailConf,
+  userController.mailConfirmation
+);
 
 // FORGOT PASSWORD
 router.post("/user/password/forgot", userController.forgotPasswordCode);
@@ -26,6 +30,6 @@ router.post("/user/password/forgot", userController.forgotPasswordCode);
 router.post("/user/password/change", userController.changePass);
 
 // LOGOUT
-router.post("/user/logout", isAuth, userController.logout);
+router.post("/user/logout", isAuth.sessionToken, userController.logout);
 
 module.exports = router;

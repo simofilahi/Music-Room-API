@@ -32,7 +32,8 @@ const userSchema = mongoose.Schema(
     isVerified: { type: Boolean, default: false },
     forgotPassConfCode: { type: Number },
     // confirmationCode: { code: Number, exp: Date },
-    mailConfCode: { type: Number },
+    mailConfCode: { type: Number, unique: true },
+    mailConfToken: { type: String, unique: true },
     token: { type: String, unique: true },
   },
   { timestamps: true }
@@ -41,6 +42,15 @@ const userSchema = mongoose.Schema(
 // GENERATE JWT TOKEN
 userSchema.methods.generateToken = async function () {
   this.token = await jwt.sign(
+    { email: this.email, _id: this._id },
+    process.env.SECRET,
+    { expiresIn: "7d" }
+  );
+};
+
+// GENERATE CONFIRMATION TOKEN
+userSchema.methods.generateMailConfToken = async function () {
+  this.mailConfToken = await jwt.sign(
     { email: this.email, _id: this._id },
     process.env.SECRET,
     { expiresIn: "7d" }
