@@ -66,7 +66,7 @@ exports.login = asyncHandler(async (req, res, next) => {
 
   // VERIFY IS ACTIVE USER
   if (!user.isVerified) {
-    user.generateMailConfToken();
+    await user.generateMailConfToken();
     await user.save();
     return res.status(200).send({ success: true, data: user });
   }
@@ -85,7 +85,7 @@ exports.login = asyncHandler(async (req, res, next) => {
   await user.updateOne({ status: "online" });
 
   // SEND RESPONSE
-  res.status(201).send({ success: true, data: user });
+  res.status(200).send({ success: true, data: user });
 });
 
 //@DESC GET USER INFORAMTIONS
