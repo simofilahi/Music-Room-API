@@ -5,7 +5,9 @@ const spotifyApi = require("../config/spotify_config");
 const EventStore = require("../utils/events");
 const EventObject = require("../utils/event");
 const axios = require("axios");
-const downloadFile = require("../");
+const downloadFile = require("../utils/downloadTrack");
+
+const path = require("path");
 
 // @DESC CREATE AN EVENT
 // @ROUTE GET /api/events
@@ -75,17 +77,28 @@ exports.addTrack = asyncHandler(async (req, res, next) => {
   // GET TRACK INFORMATIONS (CALL TRACK-SERVICE)
   const track = await axios.get(`http://localhost:4005/api/tracks/${trackId}`);
 
+  // TRACK OUTPUT DIRECTORY
+  const outputLocationPath = path.join(
+    path.dirname(require.main.filename),
+    "/media",
+    `${trackId}.mp3`
+  );
+
+  // TRACK URL
+  const url = track.data.data.preview_url;
+
   // DOWNLOAD TRACK
-  const data = downloadFile();
+  await downloadFile(url, outputLocationPath);
   // ADD TRACK TO EVENT
 
   // SEND RESPONSE
+  res.status(200).send({ status: true, data: [] });
 });
 
 // @DESC DELETE TRACK TO AN EVENT
 // @ROUTE DELETE /api/events/:id/track
 // @ACCESS PRIVATE
-exports.addTrack = asyncHandler(async (req, res, next) => {
+exports.removeTrack = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { eventId } = req.params;
   const { trackId } = req.body;
