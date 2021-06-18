@@ -8,6 +8,9 @@ router.post("/events", eventController.createEvent);
 // UPDATE AN EVENT
 // router.put("/events/:id", eventController.updateEvent);
 
+// GET EVENTS
+router.get("/events", eventController.getEvents);
+
 // ADD TRACK TO A EVENT
 router.post("/events/:id/track", eventController.addTrack);
 
