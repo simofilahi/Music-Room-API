@@ -17,9 +17,13 @@ const eventSchema = new mongoose.Schema({
   },
   playlist: [
     {
+      artists: Array,
+      name: String,
       trackId: String,
-      trackName: String,
       preview_url: String,
+      popularity: Number,
+      file: String,
+      images: [],
     },
   ],
   status: {

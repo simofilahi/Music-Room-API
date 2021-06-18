@@ -30,6 +30,21 @@ exports.createEvent = asyncHandler(async (req, res, next) => {
   res.status(200).send({ success: true, data: data.body });
 });
 
+// @DESC CREATE AN EVENT
+// @ROUTE GET /api/events
+// @ACCESS PRIVATE
+exports.getEvents = asyncHandler(async (req, res, next) => {
+  // GET EVENTS
+  const events = await EventModel.find();
+
+  // VERFIY EXISTANCE OF EVENTS
+  if (!events)
+    return next(ErrorResponse({ status: 403, message: "no event found" }));
+
+  // SEND RESPONSE
+  res.status(200).send({ success: true, data: events });
+});
+
 // @DESC UPDATE AN EVENT
 // @ROUTE PUT /api/events/:id
 // @ACCESS PRIVATE
@@ -64,15 +79,8 @@ exports.updateEvent = asyncHandler(async (req, res, next) => {
 // @ACCESS PRIVATE
 exports.addTrack = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
-  const { eventId } = req.params;
+  const { id: eventId } = req.params;
   const { trackId } = req.body;
-
-  // LOOk FOR EVENT IN DB
-  const event = EventModel.findOne({ _id: eventId });
-
-  // IF EVENT DOESN'T EXIST
-  if (!event)
-    return next(new ErrorResponse({ status: 404, message: "event not found" }));
 
   // GET TRACK INFORMATIONS (CALL TRACK-SERVICE)
   const track = await axios.get(`http://localhost:4005/api/tracks/${trackId}`);
@@ -89,10 +97,22 @@ exports.addTrack = asyncHandler(async (req, res, next) => {
 
   // DOWNLOAD TRACK
   await downloadFile(url, outputLocationPath);
+
+  // ADD AUDIO PATH TO TRACK OBJECT
+  track.data.data.file = `${trackId}.mp3`;
+
+  const { data } = track.data;
+
+  // DON'T FORGOT TO DON'T SAVE DUPLICATE OBJECT
   // ADD TRACK TO EVENT
+  const event = await EventModel.findOneAndUpdate(
+    { _id: eventId },
+    { $addToSet: { playlist: data } },
+    { new: true }
+  );
 
   // SEND RESPONSE
-  res.status(200).send({ status: true, data: [] });
+  res.status(200).send({ status: true, data: event });
 });
 
 // @DESC DELETE TRACK TO AN EVENT
@@ -100,14 +120,14 @@ exports.addTrack = asyncHandler(async (req, res, next) => {
 // @ACCESS PRIVATE
 exports.removeTrack = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
-  const { eventId } = req.params;
+  const { id: eventId } = req.params;
   const { trackId } = req.body;
 
   // DELETE TRACK
-  const event = EventModel.findOne(
+  const event = await EventModel.findOneAndUpdate(
     { _id: eventId },
     {
-      $pullAll: {
+      $pull: {
         playlist: { _id: trackId },
       },
     },
