@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const eventSchema = new mongoose.Schema({
-  ownerId: mongoose.Types.ObjectId,
+  ownersId: [mongoose.Types.ObjectId],
   name: {
     type: String,
     minlength: [1, "name should not be less than 1"],
