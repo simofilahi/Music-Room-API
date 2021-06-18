@@ -15,7 +15,7 @@ exports.register = asyncHandler(async (req, res, next) => {
 
   // VERIFY PASSWORD
   if (!password)
-    next(new errorResponse({ status: "400", message: "Bad Request" }));
+    return next(new errorResponse({ status: "400", message: "Bad Request" }));
 
   // GENERATE RANDOM CONFIRMATION CODE
   const code = genCode();
@@ -62,7 +62,7 @@ exports.login = asyncHandler(async (req, res, next) => {
 
   // USER DOESN'T EXIST IN DB
   if (!user)
-    next(new errorResponse({ status: "401", message: "Unauthorized" }));
+    return next(new errorResponse({ status: "401", message: "Unauthorized" }));
 
   // VERIFY IS ACTIVE USER
   if (!user.isVerified) {
@@ -85,7 +85,7 @@ exports.login = asyncHandler(async (req, res, next) => {
   await user.updateOne({ status: "online" });
 
   // SEND RESPONSE
-  if (user) res.status(201).send({ success: true, data: user });
+  res.status(201).send({ success: true, data: user });
 });
 
 //@DESC GET USER INFORAMTIONS
@@ -133,9 +133,7 @@ exports.googleAuth = asyncHandler(async (req, res, next) => {
     const data = await user.save();
 
     // SEND RESPONSE
-    if (data) {
-      return res.status(201).send({ success: true });
-    }
+    if (data) return res.status(201).send({ success: true });
   }
 
   // GENERATE TOKEN
@@ -160,7 +158,7 @@ exports.edit = asyncHandler(async (req, res, next) => {
   );
 
   // ERROR RESPONSE
-  if (!data) next(new errorResponse({ success: "", message: "" }));
+  if (!data) return next(new errorResponse({ success: "", message: "" }));
 
   // SUCCESS RESPONSE
   res.status(200).send({ success: true, data: data });
@@ -197,7 +195,7 @@ exports.mailConfirmation = asyncHandler(async (req, res, next) => {
     user = await User.findOne({ _id });
 
     // SEND RESPONSE
-    res.status(200).send({ success: "true", data: user });
+    return res.status(200).send({ success: "true", data: user });
   }
 
   res
@@ -246,7 +244,7 @@ exports.forgotPasswordCode = asyncHandler(async (req, res, next) => {
 
   // IF USER DOESN'T EXIST
   if (!user)
-    next(new errorResponse({ status: "401", message: "Unauthorized" }));
+    return next(new errorResponse({ status: "401", message: "Unauthorized" }));
 
   // GENERATE RANDOM CONFIRMATION CODE
   const code = genCode();
@@ -283,7 +281,7 @@ exports.logout = asyncHandler(async (req, res, next) => {
 
   // IF USER DOESN'T EXIST
   if (!user)
-    next(new errorResponse({ status: "401", message: "Unauthorized" }));
+    return next(new errorResponse({ status: "401", message: "Unauthorized" }));
 
   // UPDATE STATUS AND TOKEN
   const data = await user.updateOne({
