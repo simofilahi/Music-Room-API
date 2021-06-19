@@ -6,26 +6,27 @@ const eventController = require("../controllers/event");
 router.post("/events", eventController.createEvent);
 
 // UPDATE AN EVENT
-// router.put("/events/:id", eventController.updateEvent);
+router.put("/events/:id", eventController.updateEvent);
 
 // GET EVENTS
 router.get("/events", eventController.getEvents);
 
-// ADD TRACK TO A EVENT
+// SUBSCRIBE TO AN EVENT
+router.post("/events/:id/subscribe", eventController.subscribe);
+
+// ADD TRACK TO AN EVENT
 router.post("/events/:id/track", eventController.addTrack);
 
-// DELETE TRACK FROM A EVENT
+// DELETE TRACK FROM AN EVENT
 router.delete("/events/:id/track", eventController.removeTrack);
 
-// router.post("/events/start", eventController.startEvent);
+// JOIN A EVENT
+router.post("/events/:id/join", eventController.joinEvent);
 
-// router.post("/events/enter", eventController.enterEvent);
+// STRART EVENT
+router.get("/events/:id/start", eventController.startEvent);
 
-// router.get("/events/play/:id", eventController.playtracks);
-// GET TRACKS
-// router.get("/event/tracks", eventController.tracks);
-
-// // ADD TRACK TO A EVENT PLAYLIST
-// router.post("/event/track/:id", eventController.addTrack);
+// STREAM TRACK
+router.get("/events/:id/tracks/play", eventController.playTrack);
 
 module.exports = router;

@@ -11,6 +11,8 @@ const eventSchema = new mongoose.Schema({
     type: String,
     maxlength: [255, "Desc should not be longer than 255 char"],
   },
+  subscribes: [mongoose.Types.ObjectId],
+  unsubscribes: [mongoose.Types.ObjectId],
   musicPreference: {
     type: Array,
     // enum: ["Pop", "Jaz", "Classical", "Dance"],
@@ -19,7 +21,7 @@ const eventSchema = new mongoose.Schema({
     {
       artists: Array,
       name: String,
-      trackId: String,
+      trackId: { type: String, unique: true },
       preview_url: String,
       popularity: Number,
       file: String,
