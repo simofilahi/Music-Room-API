@@ -1,13 +1,12 @@
 const EventModel = require("../models/Event");
 const asyncHandler = require("../helper/asyncHandler");
 const ErrorResponse = require("../helper/errorResponse");
-const spotifyApi = require("../config/spotify_config");
-const EventStore = require("../utils/events");
-const EventObject = require("../utils/event");
 const axios = require("axios");
 const downloadFile = require("../utils/downloadTrack");
-
+const EventObject = require("../utils/eventObject");
+const EventStore = require("../utils/eventStore");
 const path = require("path");
+const { request } = require("express");
 
 // @DESC CREATE AN EVENT
 // @ROUTE GET /api/events
@@ -51,11 +50,11 @@ exports.getEvents = asyncHandler(async (req, res, next) => {
 exports.updateEvent = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { name, desc, musicPreference } = req.body;
-  const { id } = req.params;
+  const { id: eventId } = req.params;
 
   // UPDATE EVENT
   const event = await EventModel.findOneAndUpdate(
-    { _id },
+    { _id: eventId },
     {
       $set: {
         name,
@@ -142,79 +141,135 @@ exports.removeTrack = asyncHandler(async (req, res, next) => {
   res.status(200).send({ success: true, data: event });
 });
 
-// // @DESC START A EVENT
-// // @ROUTE POST /api/events/start/:id
-// // @ACCESS PRIVATE
-// exports.startEvent = asyncHandler(async (req, res, next) => {
-//   // VARIABLE DESTRUCTION
-//   const { eventId } = req.body;
+// @DESC SUBSCRIBE TO A EVENT
+// @ROUTE POST /api/events/:id/subscribe
+// @ACCESS PRIVATE
+exports.subscribe = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { id: eventId } = req.params;
+  const { _id: userId } = req.user;
 
-//   // TRACK URL
-//   const url = `http://${req.get("host")}/api/events/play/${eventId}`;
+  // ADD USER ID TO SUBSCRIBES ARRAY
+  const event = await EventModel.findOneAndUpdate(
+    { _id: eventId },
+    { $addToSet: { subscribes: userId } },
+    { new: true }
+  );
 
-//   // LOOK FOR EVENT IN DB
-//   const eventDoc = await EventModel.findOneAndUpdate(
-//     { _id: eventId },
-//     {
-//       $set: {
-//         trackUrl: url,
-//       },
-//     }
-//   );
+  // IF EVENT DOESN'T EXIST
+  if (!event)
+    return next(new ErrorResponse({ status: 404, message: "event not found" }));
 
-//   // IF DOESN'T EXIST
-//   if (!eventDoc)
-//     return next(new ErrorResponse({ status: 404, message: "event not found" }));
+  // SEND RESPONSE
+  res.status(200).send({ success: true, data: event });
+});
 
-//   // CREATE STREAMING OBJECT
-//   const eventStream = new EventObject(eventId, eventDoc.playlist);
+// @DESC UNSUBSCRIBE TO A EVENT
+// @ROUTE POST /api/events/:id/unsubscribe
+// @ACCESS PRIVATE
+exports.unsubscribe = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { id: eventId } = req.params;
+  const { _id: userId } = req.user;
 
-//   // START STREAMING
-//   eventStream.startStreaming();
+  // LOOK FOR EVENT
+  const event = await EventModel.findOneAndUpdate(
+    { _id: eventId },
+    { $pull: { unsubscribes: userId } },
+    { new: true }
+  );
 
-//   // ADD STREMING OBJECT IN ARRAY
-//   EventStore.push(eventStream);
+  // IF EVENT DOESN'T EXIST
+  if (!event)
+    return next(new ErrorResponse({ status: 404, message: "event not found" }));
 
-//   // SEND RESPONSE
-//   res.status(200).send({ success: true });
-// });
+  // SEND RESPONSE
+  res.status(200).send({ success: true, data: event });
+});
 
-// // @DESC ENTER AN EVENT
-// // @ROUTE POST /api/events/enter/
-// // @ACCESS PRIVATE
-// exports.enterEvent = asyncHandler(async (req, res, next) => {
-//   // VARIABLE DESTRUCTION
-//   const { eventId } = req.body;
+// @DESC ENTER AN EVENT
+// @ROUTE POST /api/events/:id/join
+// @ACCESS PRIVATE
+exports.joinEvent = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { id: eventId } = req.params;
 
-//   // LOOK FOR EVENT IN DB
-//   const eventDoc = await EventModel.findOne({ _id: eventId });
+  // ADD USER ID TO SUBSCRIBES ARRAY
+  const event = await EventModel.findOneAndUpdate(
+    { _id: eventId },
+    { $addToSet: { subscribes: userId } },
+    { new: true }
+  );
 
-//   // IF DOESN'T EXIST
-//   if (!eventDoc)
-//     return next(new ErrorResponse({ status: 404, message: "event not found" }));
+  // IF DOESN'T EXIST
+  if (!event)
+    return next(new ErrorResponse({ status: 404, message: "event not found" }));
 
-//   // SEND RESPONSE
-//   res.status(200).send({ success: true, data: eventDoc });
-// });
+  // SEND RESPONSE
+  res.status(200).send({ success: true, data: eventDoc });
+});
 
-// // // @DESC PLAY A STREAMED TRACK
-// // // @ROUTE GET api/events/play/:id
-// // // @ACCESS PRIVATE
-// // exports.playtracks = asyncHandler(async (req, res, next) => {
-// //   const { id } = req.params;
-// //   // LOOK FOR EVENT IN DB
-// //   // const event = await EventModel.findOne({ _id: id });
-// //   // // SET HEADER TO AUDIO CONTENT
-// //   // res.setHeader("Content-Type", "audio/mpeg");
-// //   // console.log("test");
-// //   // EventStore[0].addConsumer(res);
-// //   // console.log(EventStore[0]);
-// //   for (let ev of EventStore) {
-// //     // console.log(event);
-// //     if (ev.eventId === id) {
-// //       // console.log("test");
-// //       ev.addConsumer(res);
-// //       break;
-// //     }
-// //   }
-// // });
+// @DESC START A EVENT
+// @ROUTE GET /api/events/:id/start
+// @ACCESS PRIVATE
+exports.startEvent = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { id: eventId } = req.params;
+
+  // TRACK URL
+  const url = `http://${req.get("host")}/api/events/${eventId}/tracks/play`;
+
+  // LOOK FOR EVENT IN DB
+  const eventDoc = await EventModel.findOneAndUpdate(
+    { _id: eventId },
+    {
+      $set: {
+        trackUrl: url,
+      },
+    },
+    { new: true }
+  );
+
+  // IF DOESN'T EXIST
+  if (!eventDoc)
+    return next(new ErrorResponse({ status: 404, message: "event not found" }));
+
+  // CREATE STREAMING OBJECT
+  const eventStream = new EventObject(eventId, eventDoc.playlist);
+
+  // START STREAMING
+  eventStream.startStreaming();
+
+  // ADD STREMING OBJECT IN ARRAY
+  EventStore.push(eventStream);
+
+  // SEND RESPONSE
+  res.status(200).send({ success: true, data: eventDoc });
+});
+
+// @DESC PLAY A STREAMED TRACK
+// @ROUTE GET api/events/:id/track/play
+// @ACCESS PRIVATE
+exports.playTrack = asyncHandler(async (req, res, next) => {
+  const { id: eventId } = req.params;
+
+  // // LOOK FOR EVENT IN DB
+  // const eventDoc = await EventModel.findOne({ _id: eventId });
+
+  // if (!eventDoc)
+  //   return next(new ErrorResponse({ status: 404, message: "event not found" }));
+
+  // // SET HEADER TO AUDIO CONTENT
+  res.setHeader("Content-Type", "audio/mpeg");
+
+  let index = 0;
+  while (index < EventStore.length) {
+    if (EventStore[index].eventId == eventId) {
+      EventStore[index].addConsumer(res);
+    }
+    index++;
+  }
+  req.on("close", function () {
+    console.log("test");
+  });
+});
