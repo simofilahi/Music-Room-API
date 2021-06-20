@@ -1,28 +1,39 @@
 const express = require("express");
 const router = express.Router();
 const playListController = require("../controllers/playlist");
+const authController = require("../middleware/isAuth");
 
 // CREATE PLAYLIST
-router.post("/playlist/create", playListController.create);
+router.post("/playlists", authController.isAuth, playListController.create);
 
 // GET PLAYLISTS
-router.get("/playlists", playListController.getAll);
+router.get("/playlists", authController.isAuth, playListController.getAll);
 
 // GET A PLAYLIST
-router.get("/playlist/:id", playListController.getOne);
+router.get("/playlists/:id", authController.isAuth, playListController.getOne);
 
 // REMOVE PLAYLIST
-router.post("/playlist/remove/:id", playListController.remove);
+router.delete(
+  "/playlists/:id",
+  authController.isAuth,
+  playListController.remove
+);
 
 // EDIT PLAYLIST
-router.post("/playlist/edit/:id", playListController.edit);
+router.put("/playlist/:id", authController.isAuth, playListController.edit);
 
 // ADD TRACK TO PLAY LIST
-router.post("/playlists/:id/track", playListController.addTrack);
+router.post(
+  "/playlists/:id/track",
+  authController.isAuth,
+  playListController.addTrack
+);
 
 // REMOVE TRACK TO PLAY LIST
-router.delete("/playlists/:id/track", playListController.deleteTrack);
+router.delete(
+  "/playlists/:id/track",
+  authController.isAuth,
+  playListController.deleteTrack
+);
 
-// // GET TRACK IN A PLAYLIST
-// router.GET("/playlists/:id/tracks", playListController.getTracksInPlayList);
 module.exports = router;

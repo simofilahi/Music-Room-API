@@ -95,6 +95,8 @@ exports.me = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { _id } = req.user;
 
+  console.log(req.user);
+
   // SEARCH FOR USER IN DB
   const user = await User.findOne({ _id }).select("-password");
 

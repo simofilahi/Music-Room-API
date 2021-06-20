@@ -4,7 +4,7 @@ const axios = require("axios");
 const ErrorResponse = require("../helper/ErrorResponse");
 
 // @DESC CREATE A PLAYLIST
-// @ROUTE POST /api/playlist/create
+// @ROUTE POST /api/playlists
 // @ACCESS PRIVATE
 exports.create = asyncHandler(async (req, res, next) => {
   // TEST
