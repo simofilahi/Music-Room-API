@@ -13,6 +13,9 @@ router.post("/auth/google", userController.googleAuth);
 // USER INFOS
 router.get("/me", isAuth.sessionToken, userController.me);
 
+// FIND USER
+router.get("/users/:id", isAuth.sessionToken, userController.user);
+
 // EDIT USER INFOS
 router.put("/user/edit", isAuth.sessionToken, userController.edit);
 

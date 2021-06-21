@@ -3,7 +3,7 @@ const { Schema } = mongoose;
 
 const playListSchema = new Schema({
   ownerId: mongoose.Types.ObjectId,
-  invitedUsers: [],
+  invitedUsers: [mongoose.Types.ObjectId],
   name: {
     type: String,
     required: true,
@@ -32,6 +32,8 @@ const playListSchema = new Schema({
   ],
   visbility: {
     type: String,
+    enum: ["private", "public"],
+    default: "public",
   },
 });
 
