@@ -3,15 +3,20 @@ const errorResponse = require("../helper/errorResponse");
 const axios = require("axios");
 
 // @DESC VERIFY USER IS AUTH
-// @ROUTE POST /api/event-bus/auth
+// @ROUTE GET /api/event-bus/auth
 // @ACCESS PRIVATE
 exports.isAuth = asyncHandler(async (req, res, next) => {
-  const config = {
-    headers: req.headers,
-  };
-  console.log(config);
+  // REDIRECT REQ TO USER_SERVICE
+  res.redirect(`${process.env.USER_SEVICE}/api/me`);
+});
 
-  const data = await axios.get("http://localhost:4004/api/me", config);
+// @DESC VERIFY USER IS EXIST
+// @ROUTE GET /api/event-bus/users/:id
+// @ACCESS PRIVATE
+exports.users = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { id: userId } = req.params;
 
-  return res.status(200).send({ success: true, data: data });
+  // REDIRECT REQ TO USER_SERVICE
+  res.redirect(`${process.env.USER_SEVICE}/api/users/${userId}`);
 });

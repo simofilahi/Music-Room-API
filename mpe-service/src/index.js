@@ -16,6 +16,19 @@ require("./config/connection");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+// CORS ALLOW INCOMING REQUEST
+app.use(function (req, res, next) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Max-Age", "1800");
+  res.setHeader("Access-Control-Allow-Headers", "content-type");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "PUT, POST, GET, DELETE, PATCH, OPTIONS"
+  );
+  next();
+});
+
 // HANDLING ERROR MIDDLEWARE
 const errorHandler = require("./middleware/errorHandler");
 

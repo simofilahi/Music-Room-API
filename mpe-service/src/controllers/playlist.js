@@ -55,7 +55,7 @@ exports.remove = asyncHandler(async (req, res, next) => {
 });
 
 // @DESC EDIT A PLAYLIST
-// @ROUTE POST /api/playlist/edit/:id
+// @ROUTE PUT /api/playlist/:id
 // @ACCESS PRIVATE
 exports.edit = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
@@ -76,7 +76,7 @@ exports.edit = asyncHandler(async (req, res, next) => {
 });
 
 // @DESC GET A PLAYLIST
-// @ROUTE GET /api/playlist/:id
+// @ROUTE GET /api/playlists/:id
 // @ACCESS PRIVATE
 exports.getOne = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
@@ -90,7 +90,7 @@ exports.getOne = asyncHandler(async (req, res, next) => {
 });
 
 // @DESC ADD TRACK TO PLAYLIST
-// @ROUTE POST /api/playlist/:id/add/track/
+// @ROUTE POST /api/playlists/:id/track
 // @ACCESS PRIVATE
 exports.addTrack = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
@@ -160,21 +160,42 @@ exports.deleteTrack = asyncHandler(async (req, res, next) => {
   res.status(200).send({ succes: true, data: data });
 });
 
-// // @DESC GET TRACKS OF A PLAYLIST
-// // @ROUTE GET /api/playlists/:id/tracks
-// // @ACCESS PRIVATE
-// exports.getTracksInPlayList = asyncHandler((req, res, next) => {
-//   // VARIABLE DESTRUCTION
-//   const { id } = req.params;
+// @DESC ADD INVITED USER TO A PLAYLIST
+// @ROUTE POST /api/playlists/:id/invite
+// @ACCESS PRIVATE
+exports.invite = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { id } = req.params;
+  const { userId } = req.body;
 
-//   // SEARCH FOR A PLAYLIST
-//   const data = await Playlist.findById({ _id: id });
+  // ADD TOKEN TO HEADER FOR AUTHORIZATION
+  const config = {
+    headers: {
+      authorization: req.headers.authorization,
+    },
+  };
 
-//   // PLAYLIST DOESN'T EXIST
-//   if (!data)
-//     return next(
-//       new ErrorResponse({ status: 404, message: "Playlilst not found" })
-//     );
-//   // SEND RESPONSE
-//   res.status(200).send({ success: 200, data: data });
-// });
+  // LOOK FOR USER IF EXSIT
+  const user = await axios.get(
+    `${process.env.EVENT_BUS_SERVICE}/api/event-bus/users/${userId}`,
+    config
+  );
+
+  // VERIFY IF USER EXIST
+  if (!user.data.succes)
+    return next(ErrorResponse({ status: 401, message: "user not found" }));
+
+  // UPDATE EVENTS
+  const playlist = await Playlist.findOneAndUpdate(
+    { _id: id },
+    { $addToSet: { invitedUsers: userId } },
+    { new: true }
+  );
+
+  // VERIFY EXISTANCE OF PLAYLIST
+  if (!playlist)
+    return next(ErrorResponse({ status: 401, message: "playlist not found" }));
+
+  // SEND RESPONSE
+  res.status(200).send({ success: true, data: playlist });
+});

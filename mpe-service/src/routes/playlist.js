@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const playListController = require("../controllers/playlist");
 const authController = require("../middleware/isAuth");
+const accessController = require("../middleware/access");
 
 // CREATE PLAYLIST
 router.post("/playlists", authController.isAuth, playListController.create);
@@ -20,12 +21,13 @@ router.delete(
 );
 
 // EDIT PLAYLIST
-router.put("/playlist/:id", authController.isAuth, playListController.edit);
+router.put("/playlists/:id", authController.isAuth, playListController.edit);
 
 // ADD TRACK TO PLAY LIST
 router.post(
   "/playlists/:id/track",
   authController.isAuth,
+  accessController.access,
   playListController.addTrack
 );
 
@@ -33,7 +35,15 @@ router.post(
 router.delete(
   "/playlists/:id/track",
   authController.isAuth,
+  accessController.access,
   playListController.deleteTrack
+);
+
+// PLAYLIST INVITED USERS
+router.post(
+  "/playlists/:id/invite",
+  authController.isAuth,
+  playListController.invite
 );
 
 module.exports = router;

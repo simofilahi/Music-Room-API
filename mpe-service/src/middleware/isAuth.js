@@ -3,16 +3,25 @@ const errorResponse = require("../helper/ErrorResponse");
 const axios = require("axios");
 
 exports.isAuth = asyncHandler(async (req, res, next) => {
+  // ADD TOKEN TO HEADER
   const config = {
-    headers: req.headers,
+    headers: {
+      authorization: req.headers.authorization,
+    },
   };
 
-  console.log(data);
+  // HTTP CALL TO VERIFY AUTH
   const data = await axios.get(
-    "http://localhost:4000/api/event-bus/auth",
+    `${process.env.EVENT_BUS_SERVICE}/api/event-bus/auth`,
     config
   );
 
-  console.log(data);
-  return res.status(200).send({ success: true, data: data });
+  // VERIFY RESPONSE
+  if (data.data.success) {
+    req.user = { id: data.data.data._id };
+    return next();
+  }
+
+  // IF THE USER DOESN'T AUTHENICATED
+  res.status(401).send({ success: false, message: "Unauthorized" });
 });

@@ -5,6 +5,7 @@ const { OAuth2Client } = require("google-auth-library");
 const hashPassword = require("../helper/hashPassword");
 const genCode = require("../helper/genCode");
 const sendConfirmationEmail = require("../helper/sendEmailConfirmation");
+const ErrorResponse = require("../../../mpe-service/src/helper/ErrorResponse");
 
 //@DESC REGISTER A USER
 //@ROUTE POST /api/auth/register
@@ -81,11 +82,17 @@ exports.login = asyncHandler(async (req, res, next) => {
   // GENERATE TOKEN
   await user.generateToken();
 
+  // SAVE TOKEN
+  await user.save();
+
   // UPDATE STATUS FIELD
   await user.updateOne({ status: "online" });
 
+  // GET NEW DOC
+  userDoc = await User.findOne({ email });
+
   // SEND RESPONSE
-  res.status(200).send({ success: true, data: user });
+  res.status(200).send({ success: true, data: userDoc });
 });
 
 //@DESC GET USER INFORAMTIONS
@@ -94,8 +101,6 @@ exports.login = asyncHandler(async (req, res, next) => {
 exports.me = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { _id } = req.user;
-
-  console.log(req.user);
 
   // SEARCH FOR USER IN DB
   const user = await User.findOne({ _id }).select("-password");
@@ -292,4 +297,22 @@ exports.logout = asyncHandler(async (req, res, next) => {
 
   // SEND RESPONSE
   res.status(200).send({ success: "true", data: data });
+});
+
+//@DESC LOGOUT
+//@ROUTE get /api/users/:id
+//@ACCESS PUBLIC
+exports.user = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { id: userId } = req.params;
+
+  // LOOK FOR USER IN DB
+  const user = await User.findOne({ _id: userId });
+
+  // VERIFY USER IF NOT EXIST
+  if (!user)
+    return next(ErrorResponse({ status: 401, message: "user not found" }));
+
+  // SEND RESPONSE
+  res.status(200).send({ succes: true });
 });
