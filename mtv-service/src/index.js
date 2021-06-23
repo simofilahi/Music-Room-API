@@ -2,6 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const app = express();
 const bodyParser = require("body-parser");
+const server = require("http").createServer(app);
 // const Events = require("./utils/events");
 // const Event = require("./utils/event");
 
@@ -13,9 +14,6 @@ const Port = process.env.PORT;
 
 // DB CONNECTION
 require("./config/connection");
-
-// SPOTIFY SETUP
-require("./config/spotify_config");
 
 // PARSER
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -33,6 +31,9 @@ app.use(function (req, res, next) {
   );
   next();
 });
+
+// SOCKET
+require("./socket/socket")(server);
 
 // const ev = new Event();
 
@@ -54,6 +55,6 @@ app.get("/api/mtv", (req, res) => {
 });
 
 // START SERVER
-app.listen(Port, () => {
+server.listen(Port, () => {
   console.log(`Server start runing on port ${Port}`);
 });
