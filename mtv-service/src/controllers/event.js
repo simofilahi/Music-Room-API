@@ -51,10 +51,11 @@ exports.updateEvent = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { name, desc, musicPreference } = req.body;
   const { id: eventId } = req.params;
+  const { id: userId } = req.user;
 
   // UPDATE EVENT
   const event = await EventModel.findOneAndUpdate(
-    { _id: eventId },
+    { _id: eventId, ownerId: userId },
     {
       $set: {
         name,
@@ -215,13 +216,14 @@ exports.joinEvent = asyncHandler(async (req, res, next) => {
 exports.startEvent = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { id: eventId } = req.params;
+  const { id: userId } = req.user;
 
   // TRACK URL
   const url = `http://${req.get("host")}/api/events/${eventId}/tracks/play`;
 
   // LOOK FOR EVENT IN DB
   const eventDoc = await EventModel.findOneAndUpdate(
-    { _id: eventId },
+    { _id: eventId, ownerId: userId },
     {
       $set: {
         trackUrl: url,
@@ -253,11 +255,11 @@ exports.startEvent = asyncHandler(async (req, res, next) => {
 exports.playTrack = asyncHandler(async (req, res, next) => {
   const { id: eventId } = req.params;
 
-  // // LOOK FOR EVENT IN DB
-  // const eventDoc = await EventModel.findOne({ _id: eventId });
+  // LOOK FOR EVENT IN DB
+  const eventDoc = await EventModel.findOne({ _id: eventId });
 
-  // if (!eventDoc)
-  //   return next(new ErrorResponse({ status: 404, message: "event not found" }));
+  if (!eventDoc)
+    return next(new ErrorResponse({ status: 404, message: "event not found" }));
 
   // // SET HEADER TO AUDIO CONTENT
   res.setHeader("Content-Type", "audio/mpeg");
@@ -266,10 +268,7 @@ exports.playTrack = asyncHandler(async (req, res, next) => {
   while (index < EventStore.length) {
     if (EventStore[index].eventId == eventId) {
       EventStore[index].addConsumer(res);
+      break;
     }
-    index++;
   }
-  req.on("close", function () {
-    console.log("test");
-  });
 });

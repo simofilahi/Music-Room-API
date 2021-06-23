@@ -22,12 +22,13 @@ const playListSchema = new Schema({
   },
   tracks: [
     {
-      trackId: { type: String },
+      trackId: { type: String, unique: true },
       name: { type: String },
       artists: { type: Array },
       images: { type: Array },
       preview_url: { type: String },
       popularity: { type: Number },
+      order: { type: Number },
     },
   ],
   visbility: {

@@ -8,18 +8,17 @@ const ErrorResponse = require("../helper/ErrorResponse");
 // @ACCESS PRIVATE
 exports.create = asyncHandler(async (req, res, next) => {
   // TEST
-  req.user = { _id: "60c0a8ed930223041ee45476" };
+  const { id: userId } = req.user;
 
   // VARIABLE DESTRUCTION
   const { name, desc, musicPreference } = req.body;
-  const { _id } = req.user;
 
   // CREATE DOC
   const playlist = new Playlist({
     name,
     desc,
     musicPreference,
-    ownerId: _id,
+    ownerId: userId,
   });
 
   // SAVE DOC
@@ -61,10 +60,11 @@ exports.edit = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { name, desc, musicPreference } = req.body;
   const { id } = req.params;
+  const { id: userId } = req.user;
 
   // FIND AND UPDTE A PLAYLIST
   await Playlist.findOneAndUpdate(
-    { _id: id },
+    { _id: id, ownerId: userId },
     { $set: { name, desc, musicPreference } }
   );
 
@@ -147,7 +147,7 @@ exports.deleteTrack = asyncHandler(async (req, res, next) => {
   // DELETE TRACK
   await Playlist.updateOne({ _id: id }, { $pull: { tracks: { trackId } } });
 
-  // GET PLAYLIST DATA
+  // GET NEW DOC
   const data = await Playlist.findOne({ _id: id });
 
   // PLAYLIST DOESN'T EXIST
@@ -165,29 +165,25 @@ exports.deleteTrack = asyncHandler(async (req, res, next) => {
 // @ACCESS PRIVATE
 exports.invite = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
-  const { id } = req.params;
+  const { id: playListId } = req.params;
+  const { id: ownerId } = req.user;
   const { userId } = req.body;
 
-  // ADD TOKEN TO HEADER FOR AUTHORIZATION
-  const config = {
-    headers: {
-      authorization: req.headers.authorization,
-    },
-  };
+  const data = await Playlist.findOne({ _id: playListId });
 
-  // LOOK FOR USER IF EXSIT
-  const user = await axios.get(
-    `${process.env.EVENT_BUS_SERVICE}/api/event-bus/users/${userId}`,
-    config
-  );
+  if (!data)
+    return next(
+      new ErrorResponse({ status: 401, message: "playlist not found" })
+    );
 
-  // VERIFY IF USER EXIST
-  if (!user.data.succes)
-    return next(ErrorResponse({ status: 401, message: "user not found" }));
+  if (data.ownerId != ownerId)
+    return next(
+      new ErrorResponse({ status: 403, message: "operation forbidden" })
+    );
 
   // UPDATE EVENTS
   const playlist = await Playlist.findOneAndUpdate(
-    { _id: id },
+    { _id: playListId },
     { $addToSet: { invitedUsers: userId } },
     { new: true }
   );

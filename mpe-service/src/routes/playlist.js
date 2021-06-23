@@ -1,48 +1,58 @@
 const express = require("express");
 const router = express.Router();
 const playListController = require("../controllers/playlist");
-const authController = require("../middleware/isAuth");
-const accessController = require("../middleware/access");
+const authMiddleware = require("../middleware/isAuth");
+const accessMiddleware = require("../middleware/access");
 
 // CREATE PLAYLIST
-router.post("/playlists", authController.isAuth, playListController.create);
+router.post("/playlists", authMiddleware.isAuth, playListController.create);
 
 // GET PLAYLISTS
-router.get("/playlists", authController.isAuth, playListController.getAll);
+router.get(
+  "/playlists",
+  authMiddleware.isAuth,
+  accessMiddleware.access,
+  playListController.getAll
+);
 
 // GET A PLAYLIST
-router.get("/playlists/:id", authController.isAuth, playListController.getOne);
+router.get(
+  "/playlists/:id",
+  authMiddleware.isAuth,
+  accessMiddleware.access,
+  playListController.getOne
+);
 
 // REMOVE PLAYLIST
 router.delete(
   "/playlists/:id",
-  authController.isAuth,
+  authMiddleware.isAuth,
   playListController.remove
 );
 
 // EDIT PLAYLIST
-router.put("/playlists/:id", authController.isAuth, playListController.edit);
+router.put("/playlists/:id", authMiddleware.isAuth, playListController.edit);
 
 // ADD TRACK TO PLAY LIST
 router.post(
   "/playlists/:id/track",
-  authController.isAuth,
-  accessController.access,
+  authMiddleware.isAuth,
+  accessMiddleware.access,
   playListController.addTrack
 );
 
 // REMOVE TRACK TO PLAY LIST
 router.delete(
   "/playlists/:id/track",
-  authController.isAuth,
-  accessController.access,
+  authMiddleware.isAuth,
+  accessMiddleware.access,
   playListController.deleteTrack
 );
 
 // PLAYLIST INVITED USERS
 router.post(
   "/playlists/:id/invite",
-  authController.isAuth,
+  authMiddleware.isAuth,
   playListController.invite
 );
 
