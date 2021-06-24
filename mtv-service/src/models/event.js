@@ -17,6 +17,24 @@ const eventSchema = new mongoose.Schema({
     type: Array,
     // enum: ["Pop", "Jaz", "Classical", "Dance"],
   },
+  chatRoom: {
+    type: Object,
+    roomId: mongoose.Types.ObjectId,
+    roomUsers: [
+      {
+        userId: mongoose.Types.ObjectId,
+        username: String,
+        photo: String,
+      },
+    ],
+    messages: [
+      {
+        message: String,
+        name: String,
+        date: { type: Date, default: Date.now },
+      },
+    ],
+  },
   playlist: [
     {
       artists: Array,
@@ -26,6 +44,7 @@ const eventSchema = new mongoose.Schema({
       popularity: Number,
       file: String,
       images: [],
+      vote: { type: Number, default: 0 },
     },
   ],
   status: {
