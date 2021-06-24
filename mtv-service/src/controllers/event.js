@@ -6,7 +6,7 @@ const downloadFile = require("../utils/downloadTrack");
 const EventObject = require("../utils/eventObject");
 const EventStore = require("../utils/eventStore");
 const path = require("path");
-const { request } = require("express");
+const mongoose = require("mongoose");
 
 // @DESC CREATE AN EVENT
 // @ROUTE GET /api/events
@@ -20,13 +20,17 @@ exports.createEvent = asyncHandler(async (req, res, next) => {
     name,
     desc,
     musicPreference,
+    chatRoom: {
+      roomId: mongoose.Types.ObjectId(),
+    },
   });
 
   // SAVE DOC
   const data = await event.save();
 
+  console.log(data);
   // SEND RESPONSE
-  res.status(200).send({ success: true, data: data.body });
+  res.status(200).send({ success: true, data: data });
 });
 
 // @DESC CREATE AN EVENT
