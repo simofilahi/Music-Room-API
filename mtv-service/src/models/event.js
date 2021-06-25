@@ -11,6 +11,7 @@ const eventSchema = new mongoose.Schema({
     type: String,
     maxlength: [255, "Desc should not be longer than 255 char"],
   },
+  image: { type: String },
   subscribes: [mongoose.Types.ObjectId],
   unsubscribes: [mongoose.Types.ObjectId],
   musicPreference: {

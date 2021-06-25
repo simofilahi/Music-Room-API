@@ -2,6 +2,8 @@ const Playlist = require("../models/Playlist");
 const asyncHandler = require("../helper/asyncHandler");
 const axios = require("axios");
 const ErrorResponse = require("../helper/ErrorResponse");
+const uploadPhoto = require("../middleware/uploads");
+const path = require("path");
 
 // @DESC CREATE A PLAYLIST
 // @ROUTE POST /api/playlists
@@ -194,4 +196,67 @@ exports.invite = asyncHandler(async (req, res, next) => {
 
   // SEND RESPONSE
   res.status(200).send({ success: true, data: playlist });
+});
+
+//@DESC UPLOAD A PHOTO
+//@ROUTE POST /api/playlists/:id/upload
+//@ACCESS PRIVATE
+exports.uploadPhoto = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { id: playListId } = req.params;
+
+  // UPLOAD PHOTO
+  await uploadPhoto(req, res);
+
+  // VERIFY FILE
+  if (!req.file)
+    return res
+      .status(400)
+      .send({ status: false, message: "please upload a photo" });
+
+  var url = `${req.protocol}://${req.get("host")}/api/playlists/photos/${
+    req.file.filename
+  }`;
+
+  // UPDATE PHOTO URL
+  const user = await Playlist.findOneAndUpdate(
+    { _id: playListId },
+    { $set: { image: url } },
+    { new: true }
+  );
+
+  // VERIFY EXISTANCE OF USER
+  if (!user)
+    return next(
+      new ErrorResponse({ status: 401, message: "playlist not found" })
+    );
+
+  // SEND RESPONSE
+  res.status(200).send({ succes: true, data: user });
+});
+
+//@DESC DOWNLOAD A PHOTO
+//@ROUTE GET /api/playlist/:name
+//@ACCESS PUBLIC
+exports.getPhoto = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { name: fileName } = req.params;
+
+  // FIND PATH OF PHOTO
+  const filePath = path.join(
+    path.dirname(require.main.filename),
+    "public",
+    "uploads",
+    fileName
+  );
+
+  console.log({ filePath });
+  // SEND FILE
+  res.download(filePath, (err) => {
+    if (err) {
+      res
+        .status(500)
+        .send({ status: false, message: "File can not be downloaded " });
+    }
+  });
 });

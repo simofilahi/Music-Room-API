@@ -7,6 +7,7 @@ const EventObject = require("../utils/eventObject");
 const EventStore = require("../utils/eventStore");
 const path = require("path");
 const mongoose = require("mongoose");
+const uploadPhoto = require("../middleware/upload");
 
 // @DESC CREATE AN EVENT
 // @ROUTE GET /api/events
@@ -275,4 +276,64 @@ exports.playTrack = asyncHandler(async (req, res, next) => {
       break;
     }
   }
+});
+
+//@DESC UPLOAD A PHOTO
+//@ROUTE POST /api/events/:id/upload
+//@ACCESS PRIVATE
+exports.uploadPhoto = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { id: eventId } = req.params;
+
+  // UPLOAD PHOTO
+  await uploadPhoto(req, res);
+
+  // VERIFY FILE
+  if (!req.file)
+    return res
+      .status(400)
+      .send({ status: false, message: "please upload a photo" });
+
+  var url = `${req.protocol}://${req.get("host")}/api/events/photos/${
+    req.file.filename
+  }`;
+
+  // UPDATE PHOTO URL
+  const user = await EventModel.findOneAndUpdate(
+    { _id: eventId },
+    { $set: { image: url } },
+    { new: true }
+  );
+
+  // VERIFY EXISTANCE OF USER
+  if (!user)
+    return next(new ErrorResponse({ status: 401, message: "event not found" }));
+
+  // SEND RESPONSE
+  res.status(200).send({ succes: true, data: user });
+});
+
+//@DESC DOWNLOAD A PHOTO
+//@ROUTE GET /api/events/:name
+//@ACCESS PUBLIC
+exports.getPhoto = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { name: fileName } = req.params;
+
+  // FIND PATH OF PHOTO
+  const filePath = path.join(
+    path.dirname(require.main.filename),
+    "public",
+    "uploads",
+    fileName
+  );
+
+  // SEND FILE
+  res.download(filePath, (err) => {
+    if (err) {
+      res
+        .status(500)
+        .send({ status: false, message: "File can not be downloaded " });
+    }
+  });
 });
