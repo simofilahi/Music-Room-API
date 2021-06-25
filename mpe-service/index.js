@@ -10,7 +10,7 @@ dotenv.config({ path: ".env" });
 const Port = process.env.PORT;
 
 // DB CONNECTION
-require("./config/connection");
+require("./src/config/connection");
 
 // PARSER
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -30,10 +30,10 @@ app.use(function (req, res, next) {
 });
 
 // HANDLING ERROR MIDDLEWARE
-const errorHandler = require("./middleware/errorHandler");
+const errorHandler = require("./src/middleware/errorHandler");
 
 // ROUTERS
-const playList = require("./routes/playlist");
+const playList = require("./src/routes/playlist");
 
 // PLAYLIST ROUTE
 app.use("/api", playList, errorHandler);

@@ -58,12 +58,15 @@ const trackVote = ({ socket, io }) => {
     );
 
     if (event) {
-      const eventDoc = await EventModel.aggregate([
-        { $match: { _id: mongoose.Types.ObjectId(eventId) } },
-        { $unwind: "$playlist" },
-        { $sort: { "playlist.vote": -1 } },
-        { $group: { _id: "$_id", playlist: { $push: "$playlist" } } },
-      ]);
+      const eventDoc = await EventModel.aggregate(
+        [
+          { $match: { _id: mongoose.Types.ObjectId(eventId) } },
+          { $unwind: "$playlist" },
+          { $sort: { "playlist.vote": -1 } },
+          { $group: { _id: "$_id", playlist: { $push: "$playlist" } } },
+        ],
+        { allowDiskUser: true }
+      );
       event["playlist"] = eventDoc[0].playlist || [];
     }
 

@@ -23,7 +23,7 @@ exports.sessionToken = asyncHandler(async (req, res, next) => {
     return next(new errorResponse({ status: 401, message: "Unauthorized" }));
 
   // ADD USER ID TO REQ OBJECT
-  req.user = { _id: user._id };
+  req.user = { id: user._id };
   next();
 });
 
@@ -47,6 +47,6 @@ exports.mailConf = asyncHandler(async (req, res, next) => {
     return next(new errorResponse({ status: 401, message: "Unauthorized" }));
 
   // ADD USER ID TO REQ OBJECT
-  req.user = { _id: user._id };
+  req.user = { id: user._id };
   next();
 });

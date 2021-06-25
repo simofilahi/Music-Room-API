@@ -16,6 +16,7 @@ const playListSchema = new Schema({
     minlength: [1, "desc should not be less than 1 char"],
     maxlength: [255, "desc should not be greater than 24 char"],
   },
+  image: { type: String },
   musicPreference: {
     type: Array,
     // enum: ["Pop", "Jaz", "Classical", "Dance"],

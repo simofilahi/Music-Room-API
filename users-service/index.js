@@ -2,18 +2,15 @@ const express = require("express");
 const dotenv = require("dotenv");
 const app = express();
 const bodyParser = require("body-parser");
-const server = require("http").createServer(app);
-// const Events = require("./utils/events");
-// const Event = require("./utils/event");
 
 // LOAD ENV VARS
 dotenv.config({ path: ".env" });
 
 // APP PORT
-const Port = process.env.PORT;
+const PORT = process.env.PORT;
 
 // DB CONNECTION
-require("./config/connection");
+require("./src/config/connection");
 
 // PARSER
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -32,29 +29,20 @@ app.use(function (req, res, next) {
   next();
 });
 
-// SOCKET
-require("./socket/socket")(server);
+// ROUTES
+const userRoutes = require("./src/routes/user");
 
-// const ev = new Event();
+// ERROR HANDLER MIDDLEWARE
+const errorHandler = require("./src/middleware/errorHandler");
 
-// ev.startStreaming();
-// Events.push(ev);
-
-// ERROR MILDDLEWARE
-const errorHandler = require("./middleware/errorHandler");
-
-// ROUTERS
-const event = require("./routes/event");
-
-// EVENT ROUTE
-app.use("/api", event, errorHandler);
+app.use("/api", userRoutes, errorHandler);
 
 // TEST ROUTE
-app.get("/api/mtv", (req, res) => {
-  res.send("Hello from mtv!");
+app.get("/api/users", (req, res) => {
+  res.send("Hello from users!");
 });
 
-// START SERVER
-server.listen(Port, () => {
-  console.log(`Server start runing on port ${Port}`);
+// START RUNNING SERVER
+app.listen(PORT, () => {
+  console.log(`Server start runing on port ${PORT}`.yellow);
 });

@@ -56,4 +56,10 @@ router.post(
   playListController.invite
 );
 
+// UPLOAD PLAYLIST PHOTO
+router.post("/playlists/:id/upload", playListController.uploadPhoto);
+
+// GET PLAYLIST PHOTO
+router.get("/playlists/photos/:name", playListController.getPhoto);
+
 module.exports = router;

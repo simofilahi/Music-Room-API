@@ -60,4 +60,10 @@ router.get(
 // STREAM TRACK
 router.get("/events/:id/tracks/play", eventController.playTrack);
 
+// UPLOAD EVENT PHOTO
+router.post("/events/:id/upload", eventController.uploadPhoto);
+
+// GET EVENT PHOTO
+router.get("/events/photos/:name", eventController.getPhoto);
+
 module.exports = router;
