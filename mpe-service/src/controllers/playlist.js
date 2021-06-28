@@ -2,24 +2,25 @@ const Playlist = require("../models/Playlist");
 const asyncHandler = require("../helper/asyncHandler");
 const axios = require("axios");
 const ErrorResponse = require("../helper/ErrorResponse");
+const uploadPhoto = require("../middleware/uploads");
+const path = require("path");
 
 // @DESC CREATE A PLAYLIST
-// @ROUTE POST /api/playlist/create
+// @ROUTE POST /api/playlists
 // @ACCESS PRIVATE
 exports.create = asyncHandler(async (req, res, next) => {
   // TEST
-  req.user = { _id: "60c0a8ed930223041ee45476" };
+  const { id: userId } = req.user;
 
   // VARIABLE DESTRUCTION
   const { name, desc, musicPreference } = req.body;
-  const { _id } = req.user;
 
   // CREATE DOC
   const playlist = new Playlist({
     name,
     desc,
     musicPreference,
-    ownerId: _id,
+    ownerId: userId,
   });
 
   // SAVE DOC
@@ -55,16 +56,17 @@ exports.remove = asyncHandler(async (req, res, next) => {
 });
 
 // @DESC EDIT A PLAYLIST
-// @ROUTE POST /api/playlist/edit/:id
+// @ROUTE PUT /api/playlist/:id
 // @ACCESS PRIVATE
 exports.edit = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { name, desc, musicPreference } = req.body;
   const { id } = req.params;
+  const { id: userId } = req.user;
 
   // FIND AND UPDTE A PLAYLIST
   await Playlist.findOneAndUpdate(
-    { _id: id },
+    { _id: id, ownerId: userId },
     { $set: { name, desc, musicPreference } }
   );
 
@@ -76,7 +78,7 @@ exports.edit = asyncHandler(async (req, res, next) => {
 });
 
 // @DESC GET A PLAYLIST
-// @ROUTE GET /api/playlist/:id
+// @ROUTE GET /api/playlists/:id
 // @ACCESS PRIVATE
 exports.getOne = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
@@ -90,7 +92,7 @@ exports.getOne = asyncHandler(async (req, res, next) => {
 });
 
 // @DESC ADD TRACK TO PLAYLIST
-// @ROUTE POST /api/playlist/:id/add/track/
+// @ROUTE POST /api/playlists/:id/track
 // @ACCESS PRIVATE
 exports.addTrack = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
@@ -147,7 +149,7 @@ exports.deleteTrack = asyncHandler(async (req, res, next) => {
   // DELETE TRACK
   await Playlist.updateOne({ _id: id }, { $pull: { tracks: { trackId } } });
 
-  // GET PLAYLIST DATA
+  // GET NEW DOC
   const data = await Playlist.findOne({ _id: id });
 
   // PLAYLIST DOESN'T EXIST
@@ -160,21 +162,101 @@ exports.deleteTrack = asyncHandler(async (req, res, next) => {
   res.status(200).send({ succes: true, data: data });
 });
 
-// // @DESC GET TRACKS OF A PLAYLIST
-// // @ROUTE GET /api/playlists/:id/tracks
-// // @ACCESS PRIVATE
-// exports.getTracksInPlayList = asyncHandler((req, res, next) => {
-//   // VARIABLE DESTRUCTION
-//   const { id } = req.params;
+// @DESC ADD INVITED USER TO A PLAYLIST
+// @ROUTE POST /api/playlists/:id/invite
+// @ACCESS PRIVATE
+exports.invite = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { id: playListId } = req.params;
+  const { id: ownerId } = req.user;
+  const { userId } = req.body;
 
-//   // SEARCH FOR A PLAYLIST
-//   const data = await Playlist.findById({ _id: id });
+  const data = await Playlist.findOne({ _id: playListId });
 
-//   // PLAYLIST DOESN'T EXIST
-//   if (!data)
-//     return next(
-//       new ErrorResponse({ status: 404, message: "Playlilst not found" })
-//     );
-//   // SEND RESPONSE
-//   res.status(200).send({ success: 200, data: data });
-// });
+  if (!data)
+    return next(
+      new ErrorResponse({ status: 401, message: "playlist not found" })
+    );
+
+  if (data.ownerId != ownerId)
+    return next(
+      new ErrorResponse({ status: 403, message: "operation forbidden" })
+    );
+
+  // UPDATE EVENTS
+  const playlist = await Playlist.findOneAndUpdate(
+    { _id: playListId },
+    { $addToSet: { invitedUsers: userId } },
+    { new: true }
+  );
+
+  // VERIFY EXISTANCE OF PLAYLIST
+  if (!playlist)
+    return next(ErrorResponse({ status: 401, message: "playlist not found" }));
+
+  // SEND RESPONSE
+  res.status(200).send({ success: true, data: playlist });
+});
+
+//@DESC UPLOAD A PHOTO
+//@ROUTE POST /api/playlists/:id/upload
+//@ACCESS PRIVATE
+exports.uploadPhoto = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { id: playListId } = req.params;
+
+  // UPLOAD PHOTO
+  await uploadPhoto(req, res);
+
+  // VERIFY FILE
+  if (!req.file)
+    return res
+      .status(400)
+      .send({ status: false, message: "please upload a photo" });
+
+  var url = `${req.protocol}://${req.get("host")}/api/playlists/photos/${
+    req.file.filename
+  }`;
+
+  // UPDATE PHOTO URL
+  const user = await Playlist.findOneAndUpdate(
+    { _id: playListId },
+    { $set: { image: url } },
+    { new: true }
+  );
+
+  // VERIFY EXISTANCE OF USER
+  if (!user)
+    return next(
+      new ErrorResponse({ status: 401, message: "playlist not found" })
+    );
+
+  // SEND RESPONSE
+  res.status(200).send({ succes: true, data: user });
+});
+
+//@DESC DOWNLOAD A PHOTO
+//@ROUTE GET /api/playlist/:name
+//@ACCESS PUBLIC
+exports.getPhoto = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { name: fileName } = req.params;
+
+  // FIND PATH OF PHOTO
+  const filePath = path.join(
+    path.dirname(require.main.filename),
+    "public",
+    "uploads",
+    fileName
+  );
+
+  console.log({ filePath });
+  // SEND FILE
+  res.download(filePath, (err) => {
+    if (err) {
+      res
+        .status(500)
+        .send({ status: false, message: "File can not be downloaded " });
+    }
+  });
+});

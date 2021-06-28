@@ -15,14 +15,15 @@ exports.sessionToken = asyncHandler(async (req, res, next) => {
   const user = await User.findOne({ _id: decoded._id });
 
   // VERIFIE USER EXISTANCE
-  if (!user) next(new errorResponse({ status: 401, message: "Unauthorized" }));
+  if (!user)
+    return next(new errorResponse({ status: 401, message: "Unauthorized" }));
 
   // MATCH TOKENS
   if (!(user.token === token))
-    next(new errorResponse({ status: 401, message: "Unauthorized" }));
+    return next(new errorResponse({ status: 401, message: "Unauthorized" }));
 
   // ADD USER ID TO REQ OBJECT
-  req.user = { _id: user._id };
+  req.user = { id: user._id };
   next();
 });
 
@@ -37,14 +38,15 @@ exports.mailConf = asyncHandler(async (req, res, next) => {
   // SEARCH FOR ID USER IN DB
   const user = await User.findOne({ _id: decoded._id });
 
-  // VERIFIE USER EXISTANCE
-  if (!user) next(new errorResponse({ status: 401, message: "Unauthorized" }));
+  // VERIFIE USER
+  if (!user)
+    return next(new errorResponse({ status: 401, message: "Unauthorized" }));
 
   // MATCH TOKENS
   if (!(user.mailConfToken === token))
-    next(new errorResponse({ status: 401, message: "Unauthorized" }));
+    return next(new errorResponse({ status: 401, message: "Unauthorized" }));
 
   // ADD USER ID TO REQ OBJECT
-  req.user = { _id: user._id };
+  req.user = { id: user._id };
   next();
 });

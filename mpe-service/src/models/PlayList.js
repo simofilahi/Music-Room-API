@@ -3,7 +3,7 @@ const { Schema } = mongoose;
 
 const playListSchema = new Schema({
   ownerId: mongoose.Types.ObjectId,
-  invitedUsers: [],
+  invitedUsers: [mongoose.Types.ObjectId],
   name: {
     type: String,
     required: true,
@@ -16,22 +16,26 @@ const playListSchema = new Schema({
     minlength: [1, "desc should not be less than 1 char"],
     maxlength: [255, "desc should not be greater than 24 char"],
   },
+  image: { type: String },
   musicPreference: {
     type: Array,
     // enum: ["Pop", "Jaz", "Classical", "Dance"],
   },
   tracks: [
     {
-      trackId: { type: String },
+      trackId: { type: String, unique: true },
       name: { type: String },
       artists: { type: Array },
       images: { type: Array },
       preview_url: { type: String },
       popularity: { type: Number },
+      order: { type: Number },
     },
   ],
   visbility: {
     type: String,
+    enum: ["private", "public"],
+    default: "public",
   },
 });
 
