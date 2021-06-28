@@ -47,7 +47,7 @@ exports.register = asyncHandler(async (req, res, next) => {
   };
 
   // SEND VERIFICATION EMAIL
-  await sendConfirmationEmail(message);
+  // await sendConfirmationEmail(message);
 
   // SEND RESPONSE
   res.status(201).send({ success: true, data: user });
