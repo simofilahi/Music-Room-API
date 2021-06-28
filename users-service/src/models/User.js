@@ -46,6 +46,7 @@ userSchema.methods.generateToken = async function () {
     process.env.SECRET,
     { expiresIn: "7d" }
   );
+  return;
 };
 
 // GENERATE CONFIRMATION TOKEN

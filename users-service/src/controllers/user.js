@@ -5,6 +5,9 @@ const { OAuth2Client } = require("google-auth-library");
 const hashPassword = require("../helper/hashPassword");
 const genCode = require("../helper/genCode");
 const sendConfirmationEmail = require("../helper/sendEmailConfirmation");
+const ErrorResponse = require("../../../mpe-service/src/helper/ErrorResponse");
+const uploadPhoto = require("../middleware/upload");
+const path = require("path");
 
 //@DESC REGISTER A USER
 //@ROUTE POST /api/auth/register
@@ -81,11 +84,17 @@ exports.login = asyncHandler(async (req, res, next) => {
   // GENERATE TOKEN
   await user.generateToken();
 
+  // SAVE TOKEN
+  await user.save();
+
   // UPDATE STATUS FIELD
   await user.updateOne({ status: "online" });
 
+  // GET NEW DOC
+  userDoc = await User.findOne({ email });
+
   // SEND RESPONSE
-  res.status(200).send({ success: true, data: user });
+  res.status(200).send({ success: true, data: userDoc });
 });
 
 //@DESC GET USER INFORAMTIONS
@@ -93,10 +102,10 @@ exports.login = asyncHandler(async (req, res, next) => {
 //@ACCESS PRIVATE
 exports.me = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
-  const { _id } = req.user;
+  const { id: userId } = req.user;
 
   // SEARCH FOR USER IN DB
-  const user = await User.findOne({ _id }).select("-password");
+  const user = await User.findOne({ userId }).select("-password");
 
   // SEND RESPONSE
   res.status(200).send({ success: true, data: user });
@@ -149,11 +158,11 @@ exports.googleAuth = asyncHandler(async (req, res, next) => {
 exports.edit = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { email, username, password } = req.body;
-  const { _id } = req.user;
+  const { id: userId } = req.user;
 
   // UPDATE USER DOC
   const data = await User.updateOne(
-    { _id },
+    { _id: userId },
     { email, username, password: await hashPassword(password) }
   );
 
@@ -170,10 +179,10 @@ exports.edit = asyncHandler(async (req, res, next) => {
 exports.mailConfirmation = asyncHandler(async (req, res, next) => {
   // CODE DESTRUCTION
   const { code } = req.body;
-  const { _id } = req.user;
+  const { id: userId } = req.user;
 
   // SEARCH FOR THE OWNER OF CODE
-  let user = await User.findOne({ _id });
+  let user = await User.findOne({ _id: userId });
 
   // IF USER DOESN'T EXIST
   if (!user)
@@ -192,7 +201,7 @@ exports.mailConfirmation = asyncHandler(async (req, res, next) => {
     });
 
     // GET UPDATED USER DOC
-    user = await User.findOne({ _id });
+    user = await User.findOne({ _id: userId });
 
     // SEND RESPONSE
     return res.status(200).send({ success: "true", data: user });
@@ -274,10 +283,10 @@ exports.forgotPasswordCode = asyncHandler(async (req, res, next) => {
 //@ACCESS PRIVATE
 exports.logout = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
-  const { _id } = req.user;
+  const { id: userId } = req.user;
 
   // SEARCH FOR A USER IN DB
-  const user = await User.findOne({ _id });
+  const user = await User.findOne({ _id: userId });
 
   // IF USER DOESN'T EXIST
   if (!user)
@@ -290,4 +299,83 @@ exports.logout = asyncHandler(async (req, res, next) => {
 
   // SEND RESPONSE
   res.status(200).send({ success: "true", data: data });
+});
+
+//@DESC LOGOUT
+//@ROUTE get /api/users/:id
+//@ACCESS PUBLIC
+exports.user = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { id: userId } = req.params;
+
+  // LOOK FOR USER IN DB
+  const user = await User.findOne({ _id: userId });
+
+  // VERIFY USER IF NOT EXIST
+  if (!user)
+    return next(ErrorResponse({ status: 401, message: "user not found" }));
+
+  // SEND RESPONSE
+  res.status(200).send({ succes: true });
+});
+
+//@DESC UPLOAD A PHOTO
+//@ROUTE POST /api/profile/upload
+//@ACCESS PRIVATE
+exports.uploadPhoto = asyncHandler(async (req, res, next) => {
+  console.log(req.user);
+  // VARIABLE DESTRUCTION
+  const { id: userId } = req.user;
+
+  // UPLOAD PHOTO
+  await uploadPhoto(req, res);
+
+  // VERIFY FILE
+  if (!req.file)
+    return res
+      .status(400)
+      .send({ status: false, message: "please upload a photo" });
+
+  var url = `${req.protocol}://${req.get("host")}/api/profile/${
+    req.file.filename
+  }`;
+
+  // UPDATE PHOTO URL
+  const user = await User.findOneAndUpdate(
+    { _id: userId },
+    { $set: { picture: url } },
+    { new: true }
+  );
+
+  // VERIFY EXISTANCE OF USER
+  if (!user)
+    return next(new ErrorResponse({ status: 401, message: "user not found" }));
+
+  // SEND RESPONSE
+  res.status(200).send({ succes: true, data: user });
+});
+
+//@DESC DOWNLOAD A PHOTO
+//@ROUTE GET /api/profile/:name
+//@ACCESS PUBLIC
+exports.getPhoto = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { name: fileName } = req.params;
+
+  // FIND PATH OF PHOTO
+  const filePath = path.join(
+    path.dirname(require.main.filename),
+    "public",
+    "uploads",
+    fileName
+  );
+
+  // SEND FILE
+  res.download(filePath, (err) => {
+    if (err) {
+      res
+        .status(500)
+        .send({ status: false, message: "File can not be downloaded " });
+    }
+  });
 });

@@ -13,6 +13,15 @@ router.post("/auth/google", userController.googleAuth);
 // USER INFOS
 router.get("/me", isAuth.sessionToken, userController.me);
 
+// FIND USER
+router.get("/users/:id", isAuth.sessionToken, userController.user);
+
+// UPLOAD PHOTO PROFILE
+router.post("/profile/upload", isAuth.sessionToken, userController.uploadPhoto);
+
+// // UPLOAD PHOTO PROFILE
+router.get("/profile/:name", userController.getPhoto);
+
 // EDIT USER INFOS
 router.put("/user/edit", isAuth.sessionToken, userController.edit);
 
