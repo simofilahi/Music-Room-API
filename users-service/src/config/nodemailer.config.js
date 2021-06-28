@@ -8,4 +8,5 @@ const mailConfig = {
   },
 };
 
+
 module.exports = mailConfig;
