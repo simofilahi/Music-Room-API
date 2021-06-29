@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const saltRounds = 10;
 
 // USER SCHEMA
 const userSchema = mongoose.Schema(
@@ -10,13 +11,20 @@ const userSchema = mongoose.Schema(
       type: String,
       required: [true, "email is required"],
       unique: true,
-      match:
+      match: [
         /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/,
+        "email not valid",
+      ],
     },
     password: {
       type: String,
-      min: [8, "Password must be greather than 8 char"],
-      max: [24, "Password must be smaller than 24 char"],
+      required: [true, "password is required"],
+      minLength: [8, "Password must be greather than 8 char"],
+      maxLength: [24, "Password must be smaller than 24 char"],
+      match: [
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+        "Password not valid",
+      ],
     },
     status: {
       type: String,
@@ -39,23 +47,29 @@ const userSchema = mongoose.Schema(
   { timestamps: true }
 );
 
+// HASH PASSWORD
+userSchema.pre("save", async function () {
+  this.password = await bcrypt.hash(this.password, saltRounds);
+});
+
 // GENERATE JWT TOKEN
 userSchema.methods.generateToken = async function () {
-  this.token = await jwt.sign(
+  const token = await jwt.sign(
     { email: this.email, _id: this._id },
     process.env.SECRET,
     { expiresIn: "7d" }
   );
-  return;
+  return token;
 };
 
 // GENERATE CONFIRMATION TOKEN
 userSchema.methods.generateMailConfToken = async function () {
-  this.mailConfToken = await jwt.sign(
+  const mailConfToken = await jwt.sign(
     { email: this.email, _id: this._id },
     process.env.SECRET,
     { expiresIn: "7d" }
   );
+  return mailConfToken;
 };
 
 // CHECK INCOMING PASSWORD IS MATCHED WITH THE PASSWORD IN DB

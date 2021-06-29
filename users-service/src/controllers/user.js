@@ -17,8 +17,13 @@ exports.register = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
 
   // VERIFY PASSWORD
-  if (!password)
-    return next(new errorResponse({ status: "400", message: "Bad Request" }));
+  if (!password || !email)
+    return next(
+      new errorResponse({
+        status: "400",
+        message: "Please provide an email and password",
+      })
+    );
 
   // GENERATE RANDOM CONFIRMATION CODE
   const code = genCode();
@@ -26,15 +31,21 @@ exports.register = asyncHandler(async (req, res, next) => {
   // CREATE DOC
   const user = new User({
     email,
-    password: await hashPassword(password),
+    password: password,
     mailConfCode: code,
   });
 
   // GENRATE TOKEN
-  await user.generateMailConfToken();
+  const mailConfToken = await user.generateMailConfToken();
 
   // SAVE DOC
-  await user.save();
+  const userDoc = await User.findOneAndUpdate(
+    { email },
+    {
+      $set: { mailConfToken: mailConfToken },
+    },
+    { new: true }
+  );
 
   // MAIL MESSAGE
   const message = {
@@ -50,7 +61,7 @@ exports.register = asyncHandler(async (req, res, next) => {
   // await sendConfirmationEmail(message);
 
   // SEND RESPONSE
-  res.status(201).send({ success: true, data: user });
+  res.status(201).send({ success: true, data: userDoc });
 });
 
 //@DESC LOGIN A USER
@@ -65,36 +76,44 @@ exports.login = asyncHandler(async (req, res, next) => {
 
   // USER DOESN'T EXIST IN DB
   if (!user)
-    return next(new errorResponse({ status: "401", message: "Unauthorized" }));
-
-  // VERIFY IS ACTIVE USER
-  if (!user.isVerified) {
-    await user.generateMailConfToken();
-    await user.save();
-    return res.status(200).send({ success: true, data: user });
-  }
+    return next(
+      new errorResponse({ status: "400", message: "Account not found" })
+    );
 
   // VERIFY PASSWORD
   const match = await user.validPassword(password);
 
   // UNAUTHORIZED IF PASS NOT VALID
   if (!match)
-    return next(new errorResponse({ status: "401", message: "pass" }));
+    return next(
+      new errorResponse({ status: "400", message: "password incorrect" })
+    );
+
+  // VERIFY IS ACTIVE USER
+  if (!user.isVerified) {
+    const mailConfToken = await user.generateMailConfToken();
+    const data = await User.findOneAndUpdate(
+      { email },
+      { $set: { mailConfToken: mailConfToken } },
+      { new: true }
+    );
+    return res.status(200).send({ success: true, data: data });
+  }
 
   // GENERATE TOKEN
-  await user.generateToken();
+  const token = await user.generateToken();
 
-  // SAVE TOKEN
-  await user.save();
-
-  // UPDATE STATUS FIELD
-  await user.updateOne({ status: "online" });
-
-  // GET NEW DOC
-  userDoc = await User.findOne({ email });
+  // SAVE TOKEN AND UPDATE
+  const data = await User.findOneAndUpdate(
+    { email },
+    {
+      $set: { token: token, status: "online" },
+    },
+    { new: true }
+  );
 
   // SEND RESPONSE
-  res.status(200).send({ success: true, data: userDoc });
+  res.status(200).send({ success: true, data: data });
 });
 
 //@DESC GET USER INFORAMTIONS
@@ -323,7 +342,6 @@ exports.user = asyncHandler(async (req, res, next) => {
 //@ROUTE POST /api/profile/upload
 //@ACCESS PRIVATE
 exports.uploadPhoto = asyncHandler(async (req, res, next) => {
-  console.log(req.user);
   // VARIABLE DESTRUCTION
   const { id: userId } = req.user;
 
