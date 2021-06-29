@@ -1,16 +1,14 @@
 const express = require("express");
-const dotenv = require("dotenv");
 const app = express();
 const bodyParser = require("body-parser");
+
+const dotenv = require("dotenv");
 
 // LOAD ENV VARS
 dotenv.config({ path: ".env" });
 
-// APP PORT
-const PORT = process.env.PORT;
-
 // DB CONNECTION
-require("./src/config/connection");
+require("./config/connection");
 
 // PARSER
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -30,10 +28,10 @@ app.use(function (req, res, next) {
 });
 
 // ROUTES
-const userRoutes = require("./src/routes/user");
+const userRoutes = require("./routes/user");
 
 // ERROR HANDLER MIDDLEWARE
-const errorHandler = require("./src/middleware/errorHandler");
+const errorHandler = require("./middleware/errorHandler");
 
 app.use("/api", userRoutes, errorHandler);
 
@@ -42,7 +40,4 @@ app.get("/api/users", (req, res) => {
   res.send("Hello from users!");
 });
 
-// START RUNNING SERVER
-app.listen(PORT, () => {
-  console.log(`Server start runing on port ${PORT}`.yellow);
-});
+module.exports = app;
