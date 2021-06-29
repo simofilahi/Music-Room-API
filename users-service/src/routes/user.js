@@ -26,11 +26,7 @@ router.get("/profile/:name", userController.getPhoto);
 router.put("/user/edit", isAuth.sessionToken, userController.edit);
 
 // MAIL CONFIRMATION
-router.post(
-  "/user/email/confirm",
-  isAuth.mailConf,
-  userController.mailConfirmation
-);
+router.post("/email/confirm", isAuth.mailConf, userController.mailConfirmation);
 
 // FORGOT PASSWORD
 router.post("/user/password/forgot", userController.forgotPasswordCode);
