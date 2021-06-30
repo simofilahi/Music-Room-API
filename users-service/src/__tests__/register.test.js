@@ -74,6 +74,8 @@ describe("Registration test /api/auth/register", () => {
       password: "12*@Atbnmv",
     });
     expect(response.status).toBe(201);
+    expect(response.body.data).toBeDefined();
+    expect(response.body.data).not.toEqual([]);
   });
 
   it("given email and password alerday in db", async () => {
