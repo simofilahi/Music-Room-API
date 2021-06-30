@@ -1,6 +1,6 @@
 const User = require("../models/User");
 const asyncHandler = require("../helper/asyncHandler");
-const errorResponse = require("../helper/errorResponse");
+const errorResponse = require("../helper/ErrorResponse");
 const { OAuth2Client } = require("google-auth-library");
 const hashPassword = require("../helper/hashPassword");
 const genCode = require("../helper/genCode");
@@ -35,17 +35,11 @@ exports.register = asyncHandler(async (req, res, next) => {
     mailConfCode: code,
   });
 
-  // GENRATE TOKEN
-  const mailConfToken = await user.generateMailConfToken();
+  // GENERATE MAIL CONF TOKEN
+  user.mailConfToken = await user.generateMailConfToken();
 
   // SAVE DOC
-  const userDoc = await User.findOneAndUpdate(
-    { email },
-    {
-      $set: { mailConfToken: mailConfToken },
-    },
-    { new: true }
-  );
+  await user.save();
 
   // MAIL MESSAGE
   const message = {
@@ -61,7 +55,7 @@ exports.register = asyncHandler(async (req, res, next) => {
   // await sendConfirmationEmail(message);
 
   // SEND RESPONSE
-  res.status(201).send({ success: true, data: userDoc });
+  res.status(201).send({ success: true, data: user });
 });
 
 //@DESC LOGIN A USER
@@ -124,7 +118,7 @@ exports.me = asyncHandler(async (req, res, next) => {
   const { id: userId } = req.user;
 
   // SEARCH FOR USER IN DB
-  const user = await User.findOne({ userId }).select("-password");
+  const user = await User.findOne({ _id: userId }).select("-password");
 
   // SEND RESPONSE
   res.status(200).send({ success: true, data: user });
@@ -317,7 +311,7 @@ exports.logout = asyncHandler(async (req, res, next) => {
   });
 
   // SEND RESPONSE
-  res.status(200).send({ success: "true", data: data });
+  res.status(200).send({ success: "true", data: [] });
 });
 
 //@DESC LOGOUT
@@ -335,7 +329,7 @@ exports.user = asyncHandler(async (req, res, next) => {
     return next(ErrorResponse({ status: 401, message: "user not found" }));
 
   // SEND RESPONSE
-  res.status(200).send({ succes: true });
+  res.status(200).send({ succes: true, data: user });
 });
 
 //@DESC UPLOAD A PHOTO

@@ -3,9 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "jest": {
-    "testPathIgnorePatterns": ["./src/__tests__/regAndLogin.js"]
-  },
+ 
   "dependencies": {
     "axios": "^0.21.1",
     "bcrypt": "^5.0.1",

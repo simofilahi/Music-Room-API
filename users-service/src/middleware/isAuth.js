@@ -1,10 +1,15 @@
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("../helper/asyncHandler");
 const User = require("../models/User");
-const errorResponse = require("../helper/errorResponse");
+const ErrorResponse = require("../helper/ErrorResponse");
 
 // AUTHORIZATION MIDDLEWARE
 exports.sessionToken = asyncHandler(async (req, res, next) => {
+  // VERIFY AUTHORIZATION HEADER TOKEN IF IT'S FOUND
+  if (!req.headers.authorization)
+    return next(
+      new ErrorResponse({ status: 400, message: "No token provided" })
+    );
   // SPLIT TOKEN FROM BEARER
   const token = req.headers.authorization.split(" ")[1];
 
