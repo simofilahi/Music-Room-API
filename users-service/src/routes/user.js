@@ -19,7 +19,7 @@ router.get("/users/:id", isAuth.sessionToken, userController.user);
 // UPLOAD PHOTO PROFILE
 router.post("/profile/upload", isAuth.sessionToken, userController.uploadPhoto);
 
-// // UPLOAD PHOTO PROFILE
+// GET PHOTO PROFILE
 router.get("/profile/:name", userController.getPhoto);
 
 // EDIT USER INFOS
