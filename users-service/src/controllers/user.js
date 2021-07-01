@@ -18,7 +18,7 @@ exports.register = asyncHandler(async (req, res, next) => {
   if (!password || !email)
     return next(
       new ErrorResponse({
-        status: "400",
+        status: 400,
         message: "Please provide an email and password",
       })
     );
@@ -69,7 +69,7 @@ exports.login = asyncHandler(async (req, res, next) => {
   // USER DOESN'T EXIST IN DB
   if (!user)
     return next(
-      new ErrorResponse({ status: "400", message: "Account not found" })
+      new ErrorResponse({ status: 400, message: "Account not found" })
     );
 
   // VERIFY PASSWORD
@@ -78,7 +78,7 @@ exports.login = asyncHandler(async (req, res, next) => {
   // UNAUTHORIZED IF PASS NOT VALID
   if (!match)
     return next(
-      new ErrorResponse({ status: "400", message: "password incorrect" })
+      new ErrorResponse({ status: 400, message: "password incorrect" })
     );
 
   // VERIFY IS ACTIVE USER
@@ -199,7 +199,7 @@ exports.mailConfirmation = asyncHandler(async (req, res, next) => {
 
   // IF USER DOESN'T EXIST
   if (!user)
-    return next(new ErrorResponse({ status: "401", message: "Unauthorized" }));
+    return next(new ErrorResponse({ status: 401, message: "Unauthorized" }));
 
   // VERIFY CONFIRMATION CODE
   if (user.mailConfCode === code) {
@@ -217,12 +217,12 @@ exports.mailConfirmation = asyncHandler(async (req, res, next) => {
     user = await User.findOne({ _id: userId });
 
     // SEND RESPONSE
-    return res.status(200).send({ success: "true", data: user });
+    return res.status(200).send({ success: true, data: user });
   }
 
   res
     .status(400)
-    .send({ success: true, message: "verfication code is invalid" });
+    .send({ success: false, message: "verfication code is invalid" });
 });
 
 //@DESC CHANGE PASSWORD FOR USER ALREADY CONNECTED
@@ -242,7 +242,7 @@ exports.changePass = asyncHandler(async (req, res, next) => {
   // UNAUTHORIZED IF PASS NOT VALID
   if (!match)
     return next(
-      new ErrorResponse({ status: "400", message: "passwords not matched" })
+      new ErrorResponse({ status: 400, message: "passwords not matched" })
     );
 
   //  UPDATE PASSWORD
@@ -257,9 +257,7 @@ exports.changePass = asyncHandler(async (req, res, next) => {
 
   // IF SAVE FAILED
   if (!data)
-    return next(
-      new ErrorResponse({ status: "500", message: "Internal error" })
-    );
+    return next(new ErrorResponse({ status: 500, message: "Internal error" }));
 
   // SEND RESPONSE
   res.status(200).send({ succes: "true", data: data });
@@ -277,7 +275,7 @@ exports.forgotPasswordCode = asyncHandler(async (req, res, next) => {
 
   // IF USER DOESN'T EXIST
   if (!user)
-    return next(new ErrorResponse({ status: "401", message: "Unauthorized" }));
+    return next(new ErrorResponse({ status: 401, message: "Unauthorized" }));
 
   // GENERATE RANDOM CONFIRMATION CODE
   const code = genCode();
@@ -303,7 +301,7 @@ exports.forgotPasswordCode = asyncHandler(async (req, res, next) => {
   // await sendConfirmationEmail(message);
 
   // SEND RESPONSE
-  res.status(200).send({ success: "true", data: data });
+  res.status(200).send({ success: true, data: data });
 });
 
 //@DESC CHANGE PASSWORD BY FORGOT METHODE
@@ -339,7 +337,7 @@ exports.changeForgotPass = asyncHandler(async (req, res, next) => {
     );
 
   // SEND RESPONSE
-  res.status(200).send({ success: "true", data: data });
+  res.status(200).send({ success: true, data: data });
 });
 
 //@DESC LOGOUT
@@ -358,7 +356,7 @@ exports.logout = asyncHandler(async (req, res, next) => {
   });
 
   // SEND RESPONSE
-  res.status(200).send({ success: "true" });
+  res.status(200).send({ success: true });
 });
 
 //@DESC GET A USER INFORMATION

@@ -3,6 +3,11 @@ const errorResponse = require("../helper/ErrorResponse");
 const errorHandler = (err, req, res, next) => {
   let error = err;
 
+  if (error?.message === "File type must be .png or jpeg")
+    error = new errorResponse({
+      status: 400,
+      message: "File type must be .png or jpeg",
+    });
   if (error?.name == "JsonWebTokenError" || error?.name === "TokenExpiredError")
     error = new errorResponse({ status: 401, message: "Unauthorized" });
   if (error?.code === 11000)
