@@ -1,11 +1,9 @@
 const User = require("../models/User");
 const asyncHandler = require("../helper/asyncHandler");
-const errorResponse = require("../helper/ErrorResponse");
 const { OAuth2Client } = require("google-auth-library");
-const hashPassword = require("../helper/hashPassword");
 const genCode = require("../helper/genCode");
 const sendConfirmationEmail = require("../helper/sendEmailConfirmation");
-const ErrorResponse = require("../../../mpe-service/src/helper/ErrorResponse");
+const ErrorResponse = require("../helper/ErrorResponse");
 const uploadPhoto = require("../middleware/upload");
 const path = require("path");
 
@@ -19,7 +17,7 @@ exports.register = asyncHandler(async (req, res, next) => {
   // VERIFY PASSWORD
   if (!password || !email)
     return next(
-      new errorResponse({
+      new ErrorResponse({
         status: "400",
         message: "Please provide an email and password",
       })
@@ -71,7 +69,7 @@ exports.login = asyncHandler(async (req, res, next) => {
   // USER DOESN'T EXIST IN DB
   if (!user)
     return next(
-      new errorResponse({ status: "400", message: "Account not found" })
+      new ErrorResponse({ status: "400", message: "Account not found" })
     );
 
   // VERIFY PASSWORD
@@ -80,7 +78,7 @@ exports.login = asyncHandler(async (req, res, next) => {
   // UNAUTHORIZED IF PASS NOT VALID
   if (!match)
     return next(
-      new errorResponse({ status: "400", message: "password incorrect" })
+      new ErrorResponse({ status: "400", message: "password incorrect" })
     );
 
   // VERIFY IS ACTIVE USER
@@ -166,21 +164,23 @@ exports.googleAuth = asyncHandler(async (req, res, next) => {
 });
 
 //@DESC REGISTER OR LOGIN A USER BY GOOGLE OAUTH
-//@ROUTE POST /api/auth/google
+//@ROUTE POST /api/profile/edit
 //@ACCESS PRIVATE
 exports.edit = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
-  const { email, username, password } = req.body;
+  const { email, username, musicPreference } = req.body;
   const { id: userId } = req.user;
 
   // UPDATE USER DOC
-  const data = await User.updateOne(
+  const data = await User.findOneAndUpdate(
     { _id: userId },
-    { email, username, password: await hashPassword(password) }
+    { email, username, musicPreference },
+    { new: true, runValidators: true }
   );
 
   // ERROR RESPONSE
-  if (!data) return next(new errorResponse({ success: "", message: "" }));
+  if (!data)
+    return next(new ErrorResponse({ success: 400, message: "Bad request" }));
 
   // SUCCESS RESPONSE
   res.status(200).send({ success: true, data: data });
@@ -199,7 +199,7 @@ exports.mailConfirmation = asyncHandler(async (req, res, next) => {
 
   // IF USER DOESN'T EXIST
   if (!user)
-    return next(new errorResponse({ status: "401", message: "Unauthorized" }));
+    return next(new ErrorResponse({ status: "401", message: "Unauthorized" }));
 
   // VERIFY CONFIRMATION CODE
   if (user.mailConfCode === code) {
@@ -225,37 +225,48 @@ exports.mailConfirmation = asyncHandler(async (req, res, next) => {
     .send({ success: true, message: "verfication code is invalid" });
 });
 
-//@DESC CHANGE PASSWORD BY FORGOT PASS METHODE
-//@ROUTE POST /api/user/password/change
-//@ACCESS PUBLIC
+//@DESC CHANGE PASSWORD FOR USER ALREADY CONNECTED
+//@ROUTE PUT /api/profile/password
+//@ACCESS PRIVATE
 exports.changePass = asyncHandler(async (req, res, next) => {
-  // CODE DESTRUCTION
-  const { code, oldPass, newPass } = req.body;
+  // VARIABLE DESTRUCTION
+  const { oldPassword, newPassword } = req.body;
+  const { id: userId } = req.user;
 
-  // SEARCH FOR THE OWNER OF CODE
-  let user = await User.findOne({ forgotPassConfCode: code });
+  // FIND USER DOC
+  const user = await User.findOne({ _id: userId });
 
-  // HASHPASS
-  const match = await user.validPassword(oldPass);
+  // HASH PASS
+  const match = await user.validPassword(oldPassword);
 
   // UNAUTHORIZED IF PASS NOT VALID
   if (!match)
-    return next(new errorResponse({ status: "401", message: "Unauthorized" }));
+    return next(
+      new ErrorResponse({ status: "400", message: "passwords not matched" })
+    );
 
-  // HASH PASS
-  const hashedPass = await hashPassword(newPass);
+  //  UPDATE PASSWORD
+  const updatedUser = await User.findOneAndUpdate(
+    { _id: userId },
+    { $set: { password: newPassword } },
+    { new: true, runValidators: true }
+  );
 
-  // UPDATE PASS
-  const data = await user.updateOne({
-    $set: { password: hashedPass, forgotPassConfCode: null },
-  });
+  // SAVE DOC TO HASH THE PASSWORD;
+  const data = await updatedUser.save();
+
+  // IF SAVE FAILED
+  if (!data)
+    return next(
+      new ErrorResponse({ status: "500", message: "Internal error" })
+    );
 
   // SEND RESPONSE
   res.status(200).send({ succes: "true", data: data });
 });
 
-//@DESC SEND FORGOT PASS TO USER MAIL
-//@ROUTE POST /api/user/password/forgot
+//@DESC SEND FORGOT CODE PASS TO USER MAIL
+//@ROUTE POST /api/password/forgot
 //@ACCESS PUBLIC
 exports.forgotPasswordCode = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
@@ -266,29 +277,69 @@ exports.forgotPasswordCode = asyncHandler(async (req, res, next) => {
 
   // IF USER DOESN'T EXIST
   if (!user)
-    return next(new errorResponse({ status: "401", message: "Unauthorized" }));
+    return next(new ErrorResponse({ status: "401", message: "Unauthorized" }));
 
   // GENERATE RANDOM CONFIRMATION CODE
   const code = genCode();
 
   // UPDATE FORGOT PASS CODE
-  await user.updateOne({ $set: { forgotPassConfCode: code } });
+  const data = await User.findOneAndUpdate(
+    { email },
+    { $set: { forgotPassConfCode: code } },
+    { new: true }
+  );
 
-  // MAIL MESSAGE
-  const message = {
-    from: process.env.EMAIL,
-    to: email,
-    subject: "Forgot password",
-    html: `<h1>Forgot Password Confirmation</h1>
-        <h4>${code}</h4>
-        </div>`,
-  };
+  // // MAIL MESSAGE
+  // const message = {
+  //   from: process.env.EMAIL,
+  //   to: email,
+  //   subject: "Forgot password",
+  //   html: `<h1>Forgot Password Confirmation</h1>
+  //       <h4>${code}</h4>
+  //       </div>`,
+  // };
 
-  // SEND VERIFICATION EMAIL
-  await sendConfirmationEmail(message);
+  // // SEND VERIFICATION EMAIL
+  // await sendConfirmationEmail(message);
 
   // SEND RESPONSE
-  res.status(200).send({ success: "true", data: user });
+  res.status(200).send({ success: "true", data: data });
+});
+
+//@DESC CHANGE PASSWORD BY FORGOT METHODE
+//@ROUTE PUT /api/password/change
+//@ACCESS PUBLIC
+exports.changeForgotPass = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { code: forgotPassConfCode, password } = req.body;
+
+  //  UPDATE PASSWORD
+  const user = await User.findOneAndUpdate(
+    { forgotPassConfCode },
+    { $set: { password, forgotPassConfCode: null } },
+    { new: true, runValidators: true }
+  );
+
+  // IF USER DOESN'T EXIST
+  if (!user)
+    return next(
+      new ErrorResponse({
+        status: "404",
+        message: "Confirmation code not found",
+      })
+    );
+
+  // SAVE DOC TO HASH THE PASSWORD;
+  const data = await user.save();
+
+  // IF SAVE FAILED
+  if (!data)
+    return next(
+      new ErrorResponse({ status: "500", message: "Internal error" })
+    );
+
+  // SEND RESPONSE
+  res.status(200).send({ success: "true", data: data });
 });
 
 //@DESC LOGOUT
@@ -301,22 +352,18 @@ exports.logout = asyncHandler(async (req, res, next) => {
   // SEARCH FOR A USER IN DB
   const user = await User.findOne({ _id: userId });
 
-  // IF USER DOESN'T EXIST
-  if (!user)
-    return next(new errorResponse({ status: "401", message: "Unauthorized" }));
-
   // UPDATE STATUS AND TOKEN
   const data = await user.updateOne({
     $set: { status: "offline", token: null },
   });
 
   // SEND RESPONSE
-  res.status(200).send({ success: "true", data: [] });
+  res.status(200).send({ success: "true" });
 });
 
-//@DESC LOGOUT
+//@DESC GET A USER INFORMATION
 //@ROUTE get /api/users/:id
-//@ACCESS PUBLIC
+//@ACCESS PRIVATE
 exports.user = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { id: userId } = req.params;

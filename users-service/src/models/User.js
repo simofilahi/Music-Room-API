@@ -6,7 +6,11 @@ const saltRounds = 10;
 // USER SCHEMA
 const userSchema = mongoose.Schema(
   {
-    username: { type: String },
+    username: {
+      type: String,
+      minLength: [4, "Username must be greather than 8 char"],
+      maxLength: [16, "Username must be smaller than 24 char"],
+    },
     email: {
       type: String,
       required: [true, "email is required"],
@@ -26,6 +30,7 @@ const userSchema = mongoose.Schema(
         "Password not valid",
       ],
     },
+    musicPreference: [],
     status: {
       type: String,
       enum: ["online", "offline"],

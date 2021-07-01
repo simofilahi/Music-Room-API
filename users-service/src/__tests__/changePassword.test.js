@@ -13,7 +13,7 @@ const DB_URI = process.env.DB_URI;
 
 jest.setTimeout(50000);
 
-describe("Test getting profile informations (/api/me)", () => {
+describe("Change password", () => {
   let token = "";
 
   beforeAll(async () => {
@@ -26,21 +26,53 @@ describe("Test getting profile informations (/api/me)", () => {
     await mongoose.connection.db.dropCollection("users");
   });
 
-  it("get logged user information", async () => {
+  it("given correct newPassword", async () => {
     const response = await request(app)
-      .get("/api/me")
+      .put("/api/profile/password")
+      .send({
+        oldPassword: "A*a123456",
+        newPassword: "12*A@tbnmvyyytt",
+      })
       .set({ Authorization: `Bearer ${token}` });
 
     expect(response.status).toBe(200);
     expect(response.body.data).toBeDefined();
     expect(response.body.data).not.toEqual([]);
-    expect(response.body.data.isVerified).toBe(true);
   });
 
-  it("incorrect token", async () => {
-    const incorrectToken = shuffleToken(token);
+  it("given incorrect oldpassword", async () => {
     const response = await request(app)
-      .get("/api/me")
+      .put("/api/profile/password")
+      .send({
+        oldPassword: "A*a1234567",
+        newPassword: "12*A@tbnmvyyytt",
+      })
+      .set({ Authorization: `Bearer ${token}` });
+
+    expect(response.status).toBe(400);
+  });
+
+  it("given incorrect newPassword", async () => {
+    const response = await request(app)
+      .put("/api/profile/password")
+      .send({
+        oldPassword: "A*a123456",
+        newPassword: "12tbnmvyyytt",
+      })
+      .set({ Authorization: `Bearer ${token}` });
+
+    expect(response.status).toBe(400);
+  });
+
+  it("given incorrect token", async () => {
+    const incorrectToken = shuffleToken(token);
+
+    const response = await request(app)
+      .put("/api/profile/password")
+      .send({
+        oldPassword: "A*a123456",
+        newPassword: "12*A@tbnmvyyytt",
+      })
       .set({ Authorization: `Bearer ${incorrectToken}` });
 
     expect(response.status).toBe(401);
