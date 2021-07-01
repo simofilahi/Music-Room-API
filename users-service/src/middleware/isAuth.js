@@ -21,11 +21,11 @@ exports.sessionToken = asyncHandler(async (req, res, next) => {
 
   // VERIFIE USER EXISTANCE
   if (!user)
-    return next(new errorResponse({ status: 401, message: "Unauthorized" }));
+    return next(new ErrorResponse({ status: 401, message: "Unauthorized" }));
 
   // MATCH TOKENS
   if (!(user.token === token))
-    return next(new errorResponse({ status: 401, message: "Unauthorized" }));
+    return next(new ErrorResponse({ status: 401, message: "Unauthorized" }));
 
   // ADD USER ID TO REQ OBJECT
   req.user = { id: user._id };
@@ -45,11 +45,11 @@ exports.mailConf = asyncHandler(async (req, res, next) => {
 
   // VERIFIE USER
   if (!user)
-    return next(new errorResponse({ status: 401, message: "Unauthorized" }));
+    return next(new ErrorResponse({ status: 401, message: "Unauthorized" }));
 
   // MATCH TOKENS
   if (!(user.mailConfToken === token))
-    return next(new errorResponse({ status: 401, message: "Unauthorized" }));
+    return next(new ErrorResponse({ status: 401, message: "Unauthorized" }));
 
   // ADD USER ID TO REQ OBJECT
   req.user = { id: user._id };

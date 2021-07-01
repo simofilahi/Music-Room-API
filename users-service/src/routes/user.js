@@ -23,16 +23,19 @@ router.post("/profile/upload", isAuth.sessionToken, userController.uploadPhoto);
 router.get("/profile/:name", userController.getPhoto);
 
 // EDIT USER INFOS
-router.put("/user/edit", isAuth.sessionToken, userController.edit);
+router.put("/profile/edit", isAuth.sessionToken, userController.edit);
 
 // MAIL CONFIRMATION
 router.post("/email/confirm", isAuth.mailConf, userController.mailConfirmation);
 
 // FORGOT PASSWORD
-router.post("/user/password/forgot", userController.forgotPasswordCode);
+router.post("/password/forgot", userController.forgotPasswordCode);
 
-// CHANGE PASSWORD
-router.post("/user/password/change", userController.changePass);
+// CHANGE PASSWORD BY FORGOT PASSWORD METHODE
+router.put("/password/change", userController.changeForgotPass);
+
+// CHANGE PASSWORD IF USER ALERDAY CONNECTED
+router.put("/profile/password", isAuth.sessionToken, userController.changePass);
 
 // LOGOUT
 router.post("/user/logout", isAuth.sessionToken, userController.logout);

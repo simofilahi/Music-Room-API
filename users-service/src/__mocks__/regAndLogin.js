@@ -12,6 +12,7 @@ const RegAndLogin = (email, password) => {
       password: password,
     });
 
+    // console.log({ status: response.status, message: response.body.message });
     if (!response.status == 201) reject(null);
     mailConfCode = response.body.data.mailConfCode;
     mailConfToken += response.body.data.mailConfToken;
