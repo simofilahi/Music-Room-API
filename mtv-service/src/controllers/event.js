@@ -14,7 +14,8 @@ const uploadPhoto = require("../middleware/upload");
 // @ACCESS PRIVATE
 exports.createEvent = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
-  const { name, desc, musicPreference } = req.body;
+  const { name, desc, musicPreference, visibility } = req.body;
+  const { id: userId } = req.user;
 
   // CREATE NEW EVENT DOC
   const event = new EventModel({
@@ -24,12 +25,13 @@ exports.createEvent = asyncHandler(async (req, res, next) => {
     chatRoom: {
       roomId: mongoose.Types.ObjectId(),
     },
+    visibility,
+    ownerId: userId,
   });
 
   // SAVE DOC
   const data = await event.save();
 
-  console.log(data);
   // SEND RESPONSE
   res.status(200).send({ success: true, data: data });
 });
@@ -39,14 +41,34 @@ exports.createEvent = asyncHandler(async (req, res, next) => {
 // @ACCESS PRIVATE
 exports.getEvents = asyncHandler(async (req, res, next) => {
   // GET EVENTS
-  const events = await EventModel.find();
+  const events = await EventModel.find({ visibility: "public" });
 
   // VERFIY EXISTANCE OF EVENTS
   if (!events)
-    return next(ErrorResponse({ status: 403, message: "no event found" }));
+    return next(new ErrorResponse({ status: 403, message: "no event found" }));
 
   // SEND RESPONSE
   res.status(200).send({ success: true, data: events });
+});
+
+// @DESC GET MY EVENTS
+// @ROUTE GET /api/my-events
+// @ACCESS PRIVATE
+exports.getMyEvents = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { id: userId } = req.user;
+
+  //   GET PLAYLISTS FROM DB
+  const data = await EventModel.find({
+    ownerId: userId,
+  });
+
+  // VERFIY EXISTANCE OF EVENTS
+  if (!data)
+    return next(new ErrorResponse({ status: 403, message: "no event found" }));
+
+  // SEND RESPONSE
+  res.status(200).send({ success: true, data: data });
 });
 
 // @DESC UPDATE AN EVENT
@@ -54,9 +76,17 @@ exports.getEvents = asyncHandler(async (req, res, next) => {
 // @ACCESS PRIVATE
 exports.updateEvent = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
-  const { name, desc, musicPreference } = req.body;
+  const { name, desc, musicPreference, visibility } = req.body;
   const { id: eventId } = req.params;
   const { id: userId } = req.user;
+
+  const isOwner = await EventModel.findOne({ _id: eventId, ownerId: userId });
+
+  // VERIFY IF THAT USER HAS ACCESS TO EDIT THIS EVENT
+  if (!isOwner)
+    return next(
+      new ErrorResponse({ status: 403, message: "forbidden operation" })
+    );
 
   // UPDATE EVENT
   const event = await EventModel.findOneAndUpdate(
@@ -66,6 +96,7 @@ exports.updateEvent = asyncHandler(async (req, res, next) => {
         name,
         desc,
         musicPreference,
+        visibility,
       },
     },
     { new: true }
@@ -79,6 +110,43 @@ exports.updateEvent = asyncHandler(async (req, res, next) => {
   res.status(200).send({ success: true, data: event });
 });
 
+// @DESC ADD INVITED USER TO AN EVENT
+// @ROUTE POST /api/events/:id/invite
+// @ACCESS PRIVATE
+exports.invite = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { id: eventId } = req.params;
+  const { id: ownerId } = req.user;
+  const { userId } = req.body;
+
+  // LOOK FOR EVENT IF IS IT EXIST IN DB
+  const data = await EventModel.findOne({ _id: eventId });
+
+  // VERIFY EVENT IF EXIST OR NOT
+  if (!data)
+    return next(new ErrorResponse({ status: 404, message: "Event not found" }));
+
+  // VERIFY WHO MADE THE REQUEST IS REALLY WHO OWN THE EVENT
+  if (data.ownerId != ownerId)
+    return next(
+      new ErrorResponse({ status: 403, message: "Operation forbidden" })
+    );
+
+  // UPDATE EVENTS
+  const event = await EventModel.findOneAndUpdate(
+    { _id: eventId },
+    { $addToSet: { invitedUsers: userId, subscribes: userId } },
+    { new: true }
+  );
+
+  // VERIFY EXISTANCE OF PLAYLIST
+  if (!event)
+    return next(ErrorResponse({ status: 404, message: "Event not found" }));
+
+  // SEND RESPONSE
+  res.status(200).send({ success: true, data: event });
+});
+
 // @DESC ADD TRACK TO AN EVENT
 // @ROUTE POST /api//events/:id/track
 // @ACCESS PRIVATE
@@ -87,13 +155,15 @@ exports.addTrack = asyncHandler(async (req, res, next) => {
   const { id: eventId } = req.params;
   const { trackId } = req.body;
 
-  // GET TRACK INFORMATIONS (CALL TRACK-SERVICE)
-  const track = await axios.get(`http://localhost:4005/api/tracks/${trackId}`);
+  // GET TRACK INFOS
+  const track = await axios.get(
+    `${process.env.EVENT_BUS_SERVICE}/api/tracks/${trackId}`
+  );
 
   // TRACK OUTPUT DIRECTORY
   const outputLocationPath = path.join(
     path.dirname(require.main.filename),
-    "/media",
+    "/public/media",
     `${trackId}.mp3`
   );
 

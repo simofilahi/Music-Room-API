@@ -2,6 +2,7 @@ const asyncHandler = require("../helper/asyncHandler");
 const axios = require("axios");
 
 exports.isAuth = asyncHandler(async (req, res, next) => {
+  console.log("AUTH".green);
   // ADD TOKEN TO HEADER
   const config = {
     headers: {
@@ -11,7 +12,7 @@ exports.isAuth = asyncHandler(async (req, res, next) => {
 
   // HTTP CALL TO VERIFY AUTH
   const data = await axios.get(
-    `${process.env.EVENT_BUS_SERVICE}/api/event-bus/auth`,
+    `${process.env.EVENT_BUS_SERVICE}/api/auth`,
     config
   );
 
