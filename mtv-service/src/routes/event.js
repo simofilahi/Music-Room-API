@@ -7,18 +7,23 @@ const accessMiddleware = require("../middleware/access");
 // CREATE AN EVENT
 router.post("/events", eventController.createEvent);
 
+// GET EVENTS
+router.get("/events", eventController.getEvents);
+
+// GET MY EVENTS
+router.get("/my-events", eventController.getMyEvents);
+
 // UPDATE AN EVENT
 router.put("/events/:id", eventController.updateEvent);
 
-// GET EVENTS
-router.get(
-  "/events",
+// PLAYLIST INVITED USERS
+router.post(
+  "/events/:id/invite",
   // authMiddleware.isAuth,
-  // accessMiddleware.access,
-  eventController.getEvents
+  eventController.invite
 );
 
-// SUBSCRIBE TO AN EVENT
+// SUBSCRIBE TO A PUBLIC EVENT
 router.post(
   "/events/:id/subscribe",
   // authMiddleware.isAuth,

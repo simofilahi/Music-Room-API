@@ -64,9 +64,10 @@ const trackVote = ({ socket, io }) => {
           { $unwind: "$playlist" },
           { $sort: { "playlist.vote": -1 } },
           { $group: { _id: "$_id", playlist: { $push: "$playlist" } } },
-        ],
-        { allowDiskUser: true }
+        ]
+        // { allowDiskUser: true }
       );
+      console.log({ event });
       event["playlist"] = eventDoc[0].playlist || [];
     }
 
