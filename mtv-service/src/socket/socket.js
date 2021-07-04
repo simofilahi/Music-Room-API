@@ -2,6 +2,8 @@ const Server = require("socket.io").Server;
 const colors = require("colors");
 const EventModel = require("../models/Event");
 const mongoose = require("mongoose");
+const EventStore = require("../utils/eventStore");
+
 // SOCKET INIT
 const socketInit = (server) => {
   return new Server(server, {
@@ -49,8 +51,10 @@ const incomingMessage = ({ socket, io }) => {
 
 const trackVote = ({ socket, io }) => {
   socket.on("track-vote", async (data) => {
+    // VARIABLE DESTRUCTION
     const { eventId, trackId } = data;
 
+    // LOOK FOR EVENT AND UPDATE VOTE COUNT FOR A TRACK
     let event = await EventModel.findOneAndUpdate(
       { _id: eventId, "playlist.trackId": trackId },
       { $inc: { "playlist.$.vote": 1 } },
@@ -58,19 +62,20 @@ const trackVote = ({ socket, io }) => {
     );
 
     if (event) {
-      const eventDoc = await EventModel.aggregate(
-        [
-          { $match: { _id: mongoose.Types.ObjectId(eventId) } },
-          { $unwind: "$playlist" },
-          { $sort: { "playlist.vote": -1 } },
-          { $group: { _id: "$_id", playlist: { $push: "$playlist" } } },
-        ]
-        // { allowDiskUser: true }
-      );
-      console.log({ event });
+      // SORT TRACKS BY VOTE
+      const eventDoc = await EventModel.aggregate([
+        { $match: { _id: mongoose.Types.ObjectId(eventId) } },
+        { $unwind: "$playlist" },
+        { $sort: { "playlist.vote": -1 } },
+        { $group: { _id: "$_id", playlist: { $push: "$playlist" } } },
+      ]);
       event["playlist"] = eventDoc[0].playlist || [];
     }
 
+    // UPATE PLAYLIST IN STREAMING EVENT
+    EventStore[eventId].updatePlaylist(event["playlist"]);
+
+    // EMIT DATA TO CLIENTS;
     io.to(eventId).emit("track-vote", [event]);
   });
 };

@@ -1,3 +1,3 @@
-let Events = [];
+let Events = {};
 
 module.exports = Events;
