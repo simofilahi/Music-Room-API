@@ -58,7 +58,7 @@ exports.getMyEvents = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { id: userId } = req.user;
 
-  //   GET PLAYLISTS FROM DB
+  //   GET EVENTS FROM DB
   const data = await EventModel.find({
     ownerId: userId,
   });
@@ -139,7 +139,7 @@ exports.invite = asyncHandler(async (req, res, next) => {
     { new: true }
   );
 
-  // VERIFY EXISTANCE OF PLAYLIST
+  // VERIFY EXISTANCE OF EVENT
   if (!event)
     return next(ErrorResponse({ status: 404, message: "Event not found" }));
 
@@ -163,7 +163,8 @@ exports.addTrack = asyncHandler(async (req, res, next) => {
   // TRACK OUTPUT DIRECTORY
   const outputLocationPath = path.join(
     path.dirname(require.main.filename),
-    "/public/media",
+    "public",
+    "media",
     `${trackId}.mp3`
   );
 
@@ -203,7 +204,7 @@ exports.removeTrack = asyncHandler(async (req, res, next) => {
     { _id: eventId },
     {
       $pull: {
-        playlist: { _id: trackId },
+        playlist: { trackId: trackId },
       },
     },
     { new: true }
@@ -211,7 +212,7 @@ exports.removeTrack = asyncHandler(async (req, res, next) => {
 
   // IF EVENT DOESN'T EXIST
   if (!event)
-    return next(new ErrorResponse({ status: 404, message: "event not found" }));
+    return next(new ErrorResponse({ status: 404, message: "Event not found" }));
 
   // SEND RESPONSE
   res.status(200).send({ success: true, data: event });
@@ -257,7 +258,7 @@ exports.unsubscribe = asyncHandler(async (req, res, next) => {
 
   // IF EVENT DOESN'T EXIST
   if (!event)
-    return next(new ErrorResponse({ status: 404, message: "event not found" }));
+    return next(new ErrorResponse({ status: 404, message: "Event not found" }));
 
   // SEND RESPONSE
   res.status(200).send({ success: true, data: event });
@@ -279,10 +280,10 @@ exports.joinEvent = asyncHandler(async (req, res, next) => {
 
   // IF DOESN'T EXIST
   if (!event)
-    return next(new ErrorResponse({ status: 404, message: "event not found" }));
+    return next(new ErrorResponse({ status: 404, message: "Event not found" }));
 
   // SEND RESPONSE
-  res.status(200).send({ success: true, data: eventDoc });
+  res.status(200).send({ success: true, data: event });
 });
 
 // @DESC START A EVENT
@@ -292,6 +293,15 @@ exports.startEvent = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { id: eventId } = req.params;
   const { id: userId } = req.user;
+
+  console.log(eventId, userId);
+  // VERIFY IF THE USER WHO OWNED THE EVENT OR NOT
+  const isOwner = await EventModel.findOne({ _id: eventId, ownerId: userId });
+
+  if (!isOwner)
+    return next(
+      new ErrorResponse({ status: 403, message: "Forbidden operation" })
+    );
 
   // TRACK URL
   const url = `http://${req.get("host")}/api/events/${eventId}/tracks/play`;
@@ -318,16 +328,17 @@ exports.startEvent = asyncHandler(async (req, res, next) => {
   eventStream.startStreaming();
 
   // ADD STREMING OBJECT IN ARRAY
-  EventStore.push(eventStream);
+  EventStore[eventId] = eventStream;
 
   // SEND RESPONSE
   res.status(200).send({ success: true, data: eventDoc });
 });
 
-// @DESC PLAY A STREAMED TRACK
+// @DESC GET STREAMED TRACK
 // @ROUTE GET api/events/:id/track/play
 // @ACCESS PRIVATE
 exports.playTrack = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
   const { id: eventId } = req.params;
 
   // LOOK FOR EVENT IN DB
@@ -339,13 +350,7 @@ exports.playTrack = asyncHandler(async (req, res, next) => {
   // // SET HEADER TO AUDIO CONTENT
   res.setHeader("Content-Type", "audio/mpeg");
 
-  let index = 0;
-  while (index < EventStore.length) {
-    if (EventStore[index].eventId == eventId) {
-      EventStore[index].addConsumer(res);
-      break;
-    }
-  }
+  EventStore[eventId].addConsumer(res);
 });
 
 //@DESC UPLOAD A PHOTO
@@ -354,6 +359,15 @@ exports.playTrack = asyncHandler(async (req, res, next) => {
 exports.uploadPhoto = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { id: eventId } = req.params;
+  const { id: ownerId } = req.user;
+
+  // VERIFY IF THE USER WHO OWNED THE EVENT OR NOT
+  const isOwner = await EventModel.findOne({ _id: eventId, ownerId: ownerId });
+
+  if (!isOwner)
+    return next(
+      new ErrorResponse({ status: 403, message: "Forbidden operation" })
+    );
 
   // UPLOAD PHOTO
   await uploadPhoto(req, res);
@@ -362,25 +376,25 @@ exports.uploadPhoto = asyncHandler(async (req, res, next) => {
   if (!req.file)
     return res
       .status(400)
-      .send({ status: false, message: "please upload a photo" });
+      .send({ status: false, message: "Please upload a photo" });
 
   var url = `${req.protocol}://${req.get("host")}/api/events/photos/${
     req.file.filename
   }`;
 
   // UPDATE PHOTO URL
-  const user = await EventModel.findOneAndUpdate(
+  const event = await EventModel.findOneAndUpdate(
     { _id: eventId },
     { $set: { image: url } },
     { new: true }
   );
 
   // VERIFY EXISTANCE OF USER
-  if (!user)
-    return next(new ErrorResponse({ status: 401, message: "event not found" }));
+  if (!event)
+    return next(new ErrorResponse({ status: 404, message: "Event not found" }));
 
   // SEND RESPONSE
-  res.status(200).send({ succes: true, data: user });
+  res.status(200).send({ succes: true, data: event });
 });
 
 //@DESC DOWNLOAD A PHOTO
