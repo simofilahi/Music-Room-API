@@ -436,3 +436,21 @@ exports.getPhoto = asyncHandler(async (req, res, next) => {
     }
   });
 });
+
+//@DESC SEARCH FOR USER
+//@ROUTE GET /api/users/search
+//@ACCESS PRIVATE
+exports.userSearch = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  let { page = 1, limit = 10, username = "" } = req.query;
+  page = parseInt(page);
+  limit = parseInt(limit);
+
+  const data = await User.find({
+    username: { $regex: username },
+  })
+    .limit(limit)
+    .skip((page - 1) * 10);
+
+  res.status(200).send({ succes: true, data });
+});
