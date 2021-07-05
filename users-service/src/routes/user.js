@@ -13,6 +13,9 @@ router.post("/auth/google", userController.googleAuth);
 // USER INFOS
 router.get("/me", isAuth.sessionToken, userController.me);
 
+// SEARCH FOR A PHOTO PROFILE
+router.get("/users/search", userController.userSearch);
+
 // FIND USER
 router.get("/users/:id", isAuth.sessionToken, userController.user);
 
