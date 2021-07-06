@@ -1,6 +1,5 @@
 const User = require("../models/User");
 const asyncHandler = require("../helper/asyncHandler");
-const { OAuth2Client } = require("google-auth-library");
 const genCode = require("../helper/genCode");
 const sendConfirmationEmail = require("../helper/sendEmailConfirmation");
 const ErrorResponse = require("../helper/ErrorResponse");

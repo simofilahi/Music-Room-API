@@ -25,10 +25,6 @@ spec:
       #   backend:
       #     serviceName: mtv-service
       #     servicePort: 4003
-      - path: /api/users
-        backend:
-          serviceName: users-service
-          servicePort: 4004
       - path: /api/auth/register
         backend:
           serviceName: users-service

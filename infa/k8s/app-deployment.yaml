@@ -1,29 +1,29 @@
-# apiVersion: apps/v1
-# kind: Deployment
-# metadata:
-#   name: event-bus-depl
-#   labels:
-#     app: event-bus
-# spec:
-#   replicas: 1
-#   selector:
-#     matchLabels:
-#       app: event-bus
-#   template:
-#     metadata:
-#       labels:
-#         app: event-bus
-#     spec:
-#       containers:
-#       - name: event-bus
-#         image: event-bus-image
-#         ports:
-#           - containerPort: 4000
-#       - name: mongodb
-#         image: mongo
-#         ports:
-#           - containerPort: 27017
-# ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-bus-depl
+  labels:
+    app: event-bus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: event-bus
+  template:
+    metadata:
+      labels:
+        app: event-bus
+    spec:
+      containers:
+      - name: event-bus
+        image: event-bus-image
+        ports:
+          - containerPort: 4000
+      - name: mongodb
+        image: mongo
+        ports:
+          - containerPort: 27017
+---
 
 # apiVersion: apps/v1
 # kind: Deployment
@@ -52,59 +52,59 @@
 #           - containerPort: 27017
 # ---
 
-# apiVersion: apps/v1
-# kind: Deployment
-# metadata:
-#   name: mpe-depl
-#   labels:
-#     app: mpe
-# spec:
-#   replicas: 1
-#   selector:
-#     matchLabels:
-#       app: mpe
-#   template:
-#     metadata:
-#       labels:
-#         app: mpe
-#     spec:
-#       containers:
-#       - name: mpe
-#         image: mpe-image
-#         ports:
-#           - containerPort: 4002
-#       - name: mongodb
-#         image: mongo
-#         ports:
-#           - containerPort: 27017
-# ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mpe-depl
+  labels:
+    app: mpe
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mpe
+  template:
+    metadata:
+      labels:
+        app: mpe
+    spec:
+      containers:
+      - name: mpe
+        image: mpe-image
+        ports:
+          - containerPort: 4002
+      - name: mongodb
+        image: mongo
+        ports:
+          - containerPort: 27017
+---
 
-# apiVersion: apps/v1
-# kind: Deployment
-# metadata:
-#   name: mtv-depl
-#   labels:
-#     app: mtv
-# spec:
-#   replicas: 1
-#   selector:
-#     matchLabels:
-#       app: mtv
-#   template:
-#     metadata:
-#       labels:
-#         app: mtv
-#     spec:
-#       containers:
-#       - name: mtv
-#         image: mtv-image
-#         ports:
-#           - containerPort: 4003
-#       - name: mongodb
-#         image: mongo
-#         ports:
-#           - containerPort: 27017
-# ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mtv-depl
+  labels:
+    app: mtv
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mtv
+  template:
+    metadata:
+      labels:
+        app: mtv
+    spec:
+      containers:
+      - name: mtv
+        image: mtv-image
+        ports:
+          - containerPort: 4003
+      - name: mongodb
+        image: mongo
+        ports:
+          - containerPort: 27017
+---
 
 apiVersion: apps/v1
 kind: Deployment
@@ -122,10 +122,10 @@ spec:
       labels:
         app: users
     spec:
-      volumes:
-        - name: db-storage
-          persistentVolumeClaim:
-            claimName: users-db-claim
+      # volumes:
+      #   - name: db-storage
+      #     persistentVolumeClaim:
+      #       claimName: users-db-claim
       containers:
         - name: users
           image: users-image
@@ -135,6 +135,37 @@ spec:
           image: mongo
           ports:
             - containerPort: 27017
-          volumeMounts:
-            - mountPath: /data/db
-              name: db-storage
+          # volumeMounts:
+          #   - mountPath: /data/db
+          #     name: db-storage
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tracks-depl
+  labels:
+    app: tracks
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tracks
+  template:
+    metadata:
+      labels:
+        app: tracks
+    spec:
+      # volumes:
+      #   - name: db-storage
+      #     persistentVolumeClaim:
+      #       claimName: users-db-claim
+      containers:
+        - name: tracks
+          image: tracks-image
+          ports:
+            - containerPort: 4005
+        - name: mongodb
+          image: mongo
+          ports:
+            - containerPort: 27017
