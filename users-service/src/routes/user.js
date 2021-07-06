@@ -10,6 +10,9 @@ router.post("/auth/login", userController.login);
 // GOOGLE AUTH
 router.post("/auth/google", userController.googleAuth);
 
+// FACEBOOK AUTH
+router.post("/auth/facebook", userController.facebookAuth);
+
 // USER INFOS
 router.get("/me", isAuth.sessionToken, userController.me);
 
