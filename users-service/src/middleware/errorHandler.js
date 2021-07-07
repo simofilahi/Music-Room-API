@@ -3,7 +3,6 @@ const errorResponse = require("../helper/ErrorResponse");
 const errorHandler = (err, req, res, next) => {
   let error = err;
 
-  console.log(error);
   if (error?.message === "File type must be .png or jpeg")
     error = new errorResponse({
       status: 400,

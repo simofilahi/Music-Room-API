@@ -29,7 +29,7 @@ exports.register = asyncHandler(async (req, res, next) => {
   // CREATE DOC
   const user = new User({
     email,
-    password: password,
+    // password: password,
     mailConfCode: code,
   });
 

@@ -6,7 +6,6 @@ const axios = require("axios");
 // @ROUTE GET /api/event-bus/auth
 // @ACCESS PRIVATE
 exports.isAuth = asyncHandler(async (req, res, next) => {
-  console.log("i'm here");
   // REDIRECT REQ TO USER_SERVICE
   res.redirect(`${process.env.USER_SEVICE}/api/me`);
 });
