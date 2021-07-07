@@ -2,6 +2,7 @@ const Playlist = require("../models/track");
 const asyncHandler = require("../helper/asyncHandler");
 const axios = require("axios");
 const spotifyApi = require("../config/spotify_config");
+const ErrorResponse = require("../helper/ErrorResponse");
 
 // @DESC GET POPULAR TRACKS
 // @ROUTE GET /api/tracks/popular
@@ -19,6 +20,10 @@ exports.getPopular = asyncHandler(async (req, res, next) => {
       authorization: `Bearer ${spotifyApi.getAccessToken()}`,
     },
   });
+
+  // INCORECT RESPONSE
+  if (tracks.status !== 200)
+    return next(new ErrorResponse({ status: 500, message: "Internal Error" }));
 
   // HANDLE DATA
   const data = tracks.data.items
@@ -49,6 +54,9 @@ exports.getTrack = asyncHandler(async (req, res, next) => {
   // GET TRACK
   const track = await spotifyApi.getTrack(id);
 
+  // INCORECT RESPONSE
+  if (tracks.statusCode != 200)
+    return next(new ErrorResponse({ status: 500, message: "Internal Error" }));
   // DATA HANDLING
   const data = {
     artists: track.body.artists,
@@ -58,6 +66,39 @@ exports.getTrack = asyncHandler(async (req, res, next) => {
     trackId: track.body.id,
     popularity: track.body.popularity,
   };
+
+  // SEND RESPONSE
+  res.status(200).send({ success: true, data: data });
+});
+
+// @DESC SEARCH FOR A TRACK
+// @ROUTE GET /api/tracks/:id
+// @ACCESS PRIVATE
+exports.trackSearch = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { name } = req.query;
+
+  // GET TRACKS
+  const tracks = await spotifyApi.searchTracks(name);
+
+  // INCORECT RESPONSE
+  if (tracks.statusCode != 200)
+    return next(new ErrorResponse({ status: 500, message: "Internal Error" }));
+
+  // HANDLE DATA
+  const data = tracks.body.tracks.items
+    .map((item) => {
+      if (item.preview_url)
+        return {
+          artists: item.artists,
+          preview_url: item.preview_url,
+          name: item.name,
+          images: item.album.images,
+          trakId: item.id,
+          popularity: item.popularity,
+        };
+    })
+    .filter((item) => item);
 
   // SEND RESPONSE
   res.status(200).send({ success: true, data: data });
