@@ -1,6 +1,7 @@
 const axios = require("axios");
 
 const isAuth = async (socket, next) => {
+  console.log("HEY HERE");
   const config = {
     headers: {
       authorization: socket.handshake.query.token,
@@ -15,9 +16,13 @@ const isAuth = async (socket, next) => {
     // VERIFY RESPONSE
     if (data.data.success) {
       socket.client.isAuth = true;
+      socket.client.id = data.data.data._id;
       return next();
     }
-  } catch {}
+  } catch {
+    socket.client.isAuth = false;
+    return next();
+  }
 
   // IF THE USER DOESN'T AUTHENICATED
   socket.client.isAuth = false;

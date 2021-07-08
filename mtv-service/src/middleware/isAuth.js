@@ -2,7 +2,8 @@ const asyncHandler = require("../helper/asyncHandler");
 const axios = require("axios");
 
 exports.isAuth = asyncHandler(async (req, res, next) => {
-  console.log("AUTH".green);
+  console.log("HOLLA AUTH".green);
+
   // ADD TOKEN TO HEADER
   const config = {
     headers: {
