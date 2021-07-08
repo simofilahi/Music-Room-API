@@ -3,6 +3,7 @@ const EventModel = require("../models/Event");
 const mongoose = require("mongoose");
 const EventStore = require("../utils/eventStore");
 const isAuth = require("./middleware/isAuth");
+const hasAccess = require("./middleware/access");
 const fs = require("fs");
 
 // SOCKET INIT
@@ -22,179 +23,174 @@ const joinToEvent = (socket) => {
 };
 
 // RECIEVE INCOMING MESSAGES
-const incomingMessage = ({ socket, io }) => {
-  socket.on("message", async (data) => {
-    try {
-      // VARIABLE DESTRUCTION
-      const { message, eventId, name } = data;
+const incomingMessage = async ({ socket, io }) => {
+  try {
+    // VARIABLE DESTRUCTION
+    const { message, eventId, name } = data;
 
-      // LOOK FOR A EVENT IN DB
-      const event = await EventModel.findOneAndUpdate(
-        {
-          _id: eventId,
-        },
-        {
-          $push: { "chatRoom.messages": { message, name } },
-        },
-        {
-          new: true,
-        }
-      );
+    // LOOK FOR A EVENT IN DB
+    const event = await EventModel.findOneAndUpdate(
+      {
+        _id: eventId,
+      },
+      {
+        $push: { "chatRoom.messages": { message, name } },
+      },
+      {
+        new: true,
+      }
+    );
 
-      //IF EVENT NOT EXIST
-      if (!event) return io.emit("Error", "no event found");
+    //IF EVENT NOT EXIST
+    if (!event) return io.emit("Error", "no event found");
 
-      // SEND MESSAGE TO ALL USERS JOINED IN A ROOM
-      io.to(eventId).emit("new message", { message, name });
-    } catch {
-      // EMIR ERROR MESSAGE
-      socket.emit("error", {
-        success: false,
-        message: "Error occurred please try again",
-      });
-    }
-  });
+    // SEND MESSAGE TO ALL USERS JOINED IN A ROOM
+    io.to(eventId).emit("new message", { message, name });
+  } catch {
+    // EMIR ERROR MESSAGE
+    socket.emit("error", {
+      success: false,
+      message: "Error occurred please try again",
+    });
+  }
 };
 
-const trackVote = ({ socket, io }) => {
-  socket.on("track-vote", async (data) => {
-    try {
-      // VARIABLE DESTRUCTION
-      const { eventId, trackId } = data;
+const trackVote = async ({ socket, io }) => {
+  console.log("track-vote");
+  try {
+    // VARIABLE DESTRUCTION
+    const { eventId, trackId } = data;
 
-      // LOOK FOR EVENT AND UPDATE VOTE COUNT FOR A TRACK
-      let event = await EventModel.findOneAndUpdate(
-        { _id: eventId, "playlist.trackId": trackId },
-        { $inc: { "playlist.$.vote": 1 } },
-        { new: true }
-      );
+    // LOOK FOR EVENT AND UPDATE VOTE COUNT FOR A TRACK
+    let event = await EventModel.findOneAndUpdate(
+      { _id: eventId, "playlist.trackId": trackId },
+      { $inc: { "playlist.$.vote": 1 } },
+      { new: true }
+    );
 
-      // VERIFY IF EVENT IS EXIST
-      if (event) {
-        // SORT TRACKS BY VOTE
-        const eventDoc = await EventModel.aggregate([
-          { $match: { _id: mongoose.Types.ObjectId(eventId) } },
-          { $unwind: "$playlist" },
-          { $sort: { "playlist.vote": -1 } },
-          { $group: { _id: "$_id", playlist: { $push: "$playlist" } } },
-        ]);
-        event["playlist"] = eventDoc[0].playlist || [];
-      }
+    // VERIFY IF EVENT IS EXIST
+    if (event) {
+      // SORT TRACKS BY VOTE
+      const eventDoc = await EventModel.aggregate([
+        { $match: { _id: mongoose.Types.ObjectId(eventId) } },
+        { $unwind: "$playlist" },
+        { $sort: { "playlist.vote": -1 } },
+        { $group: { _id: "$_id", playlist: { $push: "$playlist" } } },
+      ]);
+      event["playlist"] = eventDoc[0].playlist || [];
+    }
 
-      // UPATE PLAYLIST IN STREAMING EVENT
+    // UPATE PLAYLIST IN STREAMING EVENT
+    if (EventStore[eventId])
       EventStore[eventId].updatePlaylist(event["playlist"]);
 
-      // EMIT DATA TO CLIENTS;
-      io.to(eventId).emit("event-updated", [event]);
-    } catch {
-      // SEND ERROR MESSAGE
-      socket.emit("error", {
-        success: false,
-        message: "Error occurred please try again",
-      });
-    }
-  });
+    // EMIT DATA TO CLIENTS;
+    io.to(eventId).emit("event-updated", [event]);
+  } catch (err) {
+    console.log(err);
+    // SEND ERROR MESSAGE
+    socket.emit("error", {
+      success: false,
+      message: "Error occurred please try again",
+    });
+  }
 };
 
 // ADD TRACK TO A EVENT
-const addTrack = ({ socket, io }) => {
-  socket.on("add-track", async (data) => {
-    try {
-      // VARIABLE DESTRUCTION
-      const { eventId, trackId } = data;
+const addTrack = async ({ data, socket, io }) => {
+  try {
+    // VARIABLE DESTRUCTION
+    const { eventId, trackId } = data;
 
-      // GET TRACK INFOS
-      const track = await axios.get(
-        `${process.env.EVENT_BUS_SERVICE}/api/tracks/${trackId}`
-      );
+    // GET TRACK INFOS
+    const track = await axios.get(
+      `${process.env.EVENT_BUS_SERVICE}/api/tracks/${trackId}`
+    );
 
-      const trackName = `${trackId}_${Date.now()}.mp3`;
-      // TRACK OUTPUT DIRECTORY
-      const outputLocationPath = path.join(
-        path.dirname(require.main.filename),
-        "public",
-        "media",
-        trackName
-      );
+    const trackName = `${trackId}_${Date.now()}.mp3`;
+    // TRACK OUTPUT DIRECTORY
+    const outputLocationPath = path.join(
+      path.dirname(require.main.filename),
+      "public",
+      "media",
+      trackName
+    );
 
-      // TRACK URL
-      const url = track.data.data.preview_url;
+    // TRACK URL
+    const url = track.data.data.preview_url;
 
-      // DOWNLOAD TRACK
-      await downloadFile(url, outputLocationPath);
+    // DOWNLOAD TRACK
+    await downloadFile(url, outputLocationPath);
 
-      // ADD AUDIO PATH TO TRACK OBJECT
-      track.data.data.file = `${trackName}.mp3`;
+    // ADD AUDIO PATH TO TRACK OBJECT
+    track.data.data.file = `${trackName}.mp3`;
 
-      const { data } = track.data;
+    const { data } = track.data;
 
-      // DON'T FORGOT TO DON'T SAVE DUPLICATE OBJECT
-      // ADD TRACK TO EVENT
-      const event = await EventModel.findOneAndUpdate(
-        { _id: eventId },
-        { $addToSet: { playlist: data } },
-        { new: true }
-      );
-      // EMIT DATA TO CLIENTS;
-      io.to(eventId).emit("event-updated", event);
-    } catch {
-      // SEND ERROR MESSAGE
-      socket.emit("error", {
-        success: false,
-        message: "Error occurred please try again",
-      });
-    }
-  });
+    // DON'T FORGOT TO DON'T SAVE DUPLICATE OBJECT
+    // ADD TRACK TO EVENT
+    const event = await EventModel.findOneAndUpdate(
+      { _id: eventId },
+      { $addToSet: { playlist: data } },
+      { new: true }
+    );
+    // EMIT DATA TO CLIENTS;
+    io.to(eventId).emit("event-updated", event);
+  } catch {
+    // SEND ERROR MESSAGE
+    socket.emit("error", {
+      success: false,
+      message: "Error occurred please try again",
+    });
+  }
 };
 
 // REMOVE TRACK TO A EVENT
-const removeTrack = ({ socket, io }) => {
-  socket.on("remove-track", async (data) => {
-    try {
-      const { eventId, trackId } = data;
+const removeTrack = async ({ socket, io, data }) => {
+  try {
+    const { eventId, trackId } = data;
 
-      // LOOK FOR EVENT IF IS ALERDAY EXIST
-      let event = await EventModel.findOne({ trackId });
+    // LOOK FOR EVENT IF IS ALERDAY EXIST
+    let event = await EventModel.findOne({ trackId });
 
-      if (event) {
-        // TRACK FILE LOCATION
-        const filePath = path.join(
-          path.dirname(require.main.filename),
-          "public",
-          "media",
-          `${event.file}.mp3`
-        );
-
-        // REMOVE FILE
-        fs.unlinkSync(filePath);
-      } else {
-        socket.emit("error", {
-          success: false,
-          message: "Event not found",
-        });
-        return;
-      }
-
-      // DELETE TRACK FROM DB
-      let event = await EventModel.findOneAndUpdate(
-        { _id: eventId },
-        {
-          $pull: {
-            playlist: { trackId: trackId },
-          },
-        },
-        { new: true }
+    if (event) {
+      // TRACK FILE LOCATION
+      const filePath = path.join(
+        path.dirname(require.main.filename),
+        "public",
+        "media",
+        `${event.file}.mp3`
       );
 
-      // EMIT DATA TO CLIENTS;
-      io.to(eventId).emit("event-updated", [event]);
-    } catch {
+      // REMOVE FILE
+      fs.unlinkSync(filePath);
+    } else {
       socket.emit("error", {
         success: false,
-        message: "Error occurred please try again",
+        message: "Event not found",
       });
+      return;
     }
-  });
+
+    // DELETE TRACK FROM DB
+    event = await EventModel.findOneAndUpdate(
+      { _id: eventId },
+      {
+        $pull: {
+          playlist: { trackId: trackId },
+        },
+      },
+      { new: true }
+    );
+
+    // EMIT DATA TO CLIENTS;
+    io.to(eventId).emit("event-updated", [event]);
+  } catch {
+    socket.emit("error", {
+      success: false,
+      message: "Error occurred please try again",
+    });
+  }
 };
 
 module.exports = (server) => {
@@ -205,20 +201,15 @@ module.exports = (server) => {
   io.use(isAuth).on("connection", (socket) => {
     if (socket.client.isAuth) {
       io.emit("authenticated", { success: true, message: "authorized" });
-      // JOIN TO CHAT ROOM
-      joinToEvent(socket);
-
-      // INCOMING MESSAGE
-      incomingMessage({ socket, io });
-
-      // VOTE TO A TRACK
-      trackVote({ socket, io });
-
-      // ADD TRACK
-      addTrack({ socket, io });
-
-      // REMOVE TRACK
-      removeTrack({ socket, io });
+      // MIDDLEWARE TO VERIFY A USER HAS AN ACCESS
+      // FUNCTION HANDLER FOR EVERY EVENT
+      console.log("HELLO ******************");
+      socket
+        .use(hasAccess)
+        .on("remove-track", (data) => removeTrack({ socket, io, data }))
+        .on("add-track", (data) => addTrack({ socket, io, data }))
+        .on("message", (data) => incomingMessage({ socket, io, data }))
+        .on("track-vote", (data) => trackVote({ socket, io, data }));
     } else {
       io.emit("authenticated", { success: false, message: "unauthorized" });
       socket.disconnect();
