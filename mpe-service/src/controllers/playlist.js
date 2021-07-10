@@ -13,7 +13,7 @@ exports.create = asyncHandler(async (req, res, next) => {
   const { id: userId } = req.user;
 
   // VARIABLE DESTRUCTION
-  const { name, desc, musicPreference } = req.body;
+  const { name, desc, musicPreference, visibility } = req.body;
 
   // CREATE DOC
   const playlist = new Playlist({
@@ -21,6 +21,7 @@ exports.create = asyncHandler(async (req, res, next) => {
     desc,
     musicPreference,
     ownerId: userId,
+    visibility,
   });
 
   // SAVE DOC
@@ -32,46 +33,74 @@ exports.create = asyncHandler(async (req, res, next) => {
 
 // @DESC GET PLAYLISTS
 // @ROUTE GET /api/playlists
-// @ACCESS PRIVATE
+// @ACCESS PUBLIC
 exports.getAll = asyncHandler(async (req, res, next) => {
   //   GET PLAYLISTS FROM DB
-  const data = await Playlist.find({});
+  const data = await Playlist.find({
+    visibility: "public",
+  });
+
+  //   SEND RESPONSE
+  res.status(200).send({ success: true, data: data });
+});
+
+// @DESC GET PLAYLISTS
+// @ROUTE GET /api/my-playlists
+// @ACCESS PRIVATE
+exports.getMyPlayList = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  // VARIABLE DESTRUCTION
+  const userId = req.user.id;
+
+  //   GET PLAYLISTS FROM DB
+  const data = await Playlist.find({
+    ownerId: userId,
+  });
 
   //   SEND RESPONSE
   res.status(200).send({ success: true, data: data });
 });
 
 // @DESC REMOVE A PLAYLIST
-// @ROUTE POST /api/playlist/remove/:id
+// @ROUTE DEL /api/playlists/:id
 // @ACCESS PRIVATE
 exports.remove = asyncHandler(async (req, res, next) => {
-  // VARIABLE DESTRUCTINO
+  // VARIABLE DESTRUCTION
   const { id } = req.params;
+  const { id: userId } = req.user;
 
   // REMOVE PLAYLIST
-  const data = await Playlist.findOneAndRemove({ _id: id });
+  const data = await Playlist.findOneAndRemove({ ownerId: userId, _id: id });
 
+  if (!data)
+    return next(
+      new ErrorResponse({ status: 403, message: "forbidden operation" })
+    );
   // SEND RESPONSE
   res.status(200).send({ success: true });
 });
 
 // @DESC EDIT A PLAYLIST
-// @ROUTE PUT /api/playlist/:id
+// @ROUTE PUT /api/playlists/:id
 // @ACCESS PRIVATE
 exports.edit = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
-  const { name, desc, musicPreference } = req.body;
+  const { name, desc, musicPreference, visbility } = req.body;
   const { id } = req.params;
   const { id: userId } = req.user;
 
   // FIND AND UPDTE A PLAYLIST
-  await Playlist.findOneAndUpdate(
+  const data = await Playlist.findOneAndUpdate(
     { _id: id, ownerId: userId },
-    { $set: { name, desc, musicPreference } }
+    { $set: { name, desc, musicPreference, visbility } },
+    { runValidators: true, new: true }
   );
 
-  //  GET NEW DOC
-  const data = await Playlist.findOne({ _id: id });
+  // IF PLAYLIST NOT FOUND
+  if (!data)
+    return next(
+      new ErrorResponse({ status: 404, message: "Playlist not found" })
+    );
 
   // SEND RESPONSE
   res.status(200).send({ success: true, data: data });
@@ -99,17 +128,35 @@ exports.addTrack = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
   const { trackId } = req.body;
 
+  // LOOK FOR TRACK IF IS ALLREADY IN THE PLAYLIST TO IGNORE STORING DUPLICATE DATA
+  const trackInDb = await Playlist.findOne({
+    _id: id,
+    "tracks.trackId": trackId,
+  });
+
+  // VERIFY IF A TRACK EXIST IN A PLAYLIST
+  if (trackInDb)
+    return next(
+      new ErrorResponse({
+        status: 400,
+        message: "The track is already in playlist",
+      })
+    );
+
   // GET TRACK INFOS
-  const track = await axios.get(`http://localhost:4005/api/tracks/${trackId}`);
+  const track = await axios.get(
+    `${process.env.EVENT_BUS_SERVICE}/api/tracks/${trackId}`
+  );
 
   // VERIFY RESPONSE STATUS
-  if (!track.status)
-    return next(new ErrorResponse({ status: 500, message: "internal error" }));
+  if (track.status !== 200)
+    return next(
+      new ErrorResponse({ status: track.status, message: track.message })
+    );
 
   const trackInfo = track.data.data;
-
   // ADD TRACK TO PLAYLIST
-  await Playlist.updateOne(
+  const data = await Playlist.findOneAndUpdate(
     { _id: id },
     {
       $addToSet: {
@@ -122,11 +169,12 @@ exports.addTrack = asyncHandler(async (req, res, next) => {
           popularity: trackInfo.popularity,
         },
       },
+    },
+    {
+      new: true,
+      runValidators: true,
     }
   );
-
-  // GET PLAYLIST
-  const data = await Playlist.findById({ _id: id });
 
   // PLAYLIST DOESN'T EXIST
   if (!data)
@@ -175,7 +223,7 @@ exports.invite = asyncHandler(async (req, res, next) => {
 
   if (!data)
     return next(
-      new ErrorResponse({ status: 401, message: "playlist not found" })
+      new ErrorResponse({ status: 404, message: "playlist not found" })
     );
 
   if (data.ownerId != ownerId)
@@ -192,7 +240,7 @@ exports.invite = asyncHandler(async (req, res, next) => {
 
   // VERIFY EXISTANCE OF PLAYLIST
   if (!playlist)
-    return next(ErrorResponse({ status: 401, message: "playlist not found" }));
+    return next(ErrorResponse({ status: 404, message: "playlist not found" }));
 
   // SEND RESPONSE
   res.status(200).send({ success: true, data: playlist });
@@ -204,6 +252,15 @@ exports.invite = asyncHandler(async (req, res, next) => {
 exports.uploadPhoto = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { id: playListId } = req.params;
+  const { id: ownerId } = req.user;
+
+  // VERIFY IF THE USER WHO OWNED THE PLAYLIST OR NOT
+  const isOwner = await Playlist.findOne({ _id: playListId, ownerId: ownerId });
+
+  if (!isOwner)
+    return next(
+      new ErrorResponse({ status: 403, message: "forbidden operation" })
+    );
 
   // UPLOAD PHOTO
   await uploadPhoto(req, res);
@@ -219,20 +276,20 @@ exports.uploadPhoto = asyncHandler(async (req, res, next) => {
   }`;
 
   // UPDATE PHOTO URL
-  const user = await Playlist.findOneAndUpdate(
+  const playlist = await Playlist.findOneAndUpdate(
     { _id: playListId },
     { $set: { image: url } },
     { new: true }
   );
 
   // VERIFY EXISTANCE OF USER
-  if (!user)
+  if (!playlist)
     return next(
       new ErrorResponse({ status: 401, message: "playlist not found" })
     );
 
   // SEND RESPONSE
-  res.status(200).send({ succes: true, data: user });
+  res.status(200).send({ succes: true, data: playlist });
 });
 
 //@DESC DOWNLOAD A PHOTO
@@ -250,7 +307,6 @@ exports.getPhoto = asyncHandler(async (req, res, next) => {
     fileName
   );
 
-  console.log({ filePath });
   // SEND FILE
   res.download(filePath, (err) => {
     if (err) {

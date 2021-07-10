@@ -17,26 +17,43 @@ function Event(eventId = 0, playlist = []) {
   //   event: new EventEmitter(),
 
   this.addConsumer = function (consumer) {
-    this.consumers.push(consumer);
+    try {
+      this.consumers.push(consumer);
+    } catch {
+      this.startStreaming();
+    }
   };
 
   this.removeConsumer = function (consumer) {
-    this.consumers.delete(consumer);
+    try {
+      this.consumers.delete(consumer);
+    } catch {
+      this.startStreaming();
+    }
   };
 
   this.updatePlaylist = function (newPlaylist) {
-    this.playlist.shift().push(newPlaylist);
+    try {
+      this.playlist = newPlaylist;
+    } catch {
+      this.startStreaming();
+    }
   };
 
   this.nextTrack = function () {
-    if (this.currTrackIndex === this.playlist.length) this.currTrackIndex = 0;
-    this.currTrack = path.join(
-      path.dirname(require.main.filename),
-      "media",
-      this.playlist[this.currTrackIndex].file
-    );
-    this.currTrackIndex++;
-    this.playTrack();
+    try {
+      if (this.currTrackIndex === this.playlist.length) this.currTrackIndex = 0;
+      this.currTrack = path.join(
+        path.dirname(require.main.filename),
+        "public",
+        "media",
+        this.playlist[this.currTrackIndex].file
+      );
+      this.currTrackIndex++;
+      this.playTrack();
+    } catch {
+      this.startStreaming();
+    }
   };
 
   this.getBitRate = async function () {
@@ -49,88 +66,129 @@ function Event(eventId = 0, playlist = []) {
   };
 
   this.playTrack = async function () {
-    const bitRate = await this.getBitRate();
-    const throttle = new Throttle(bitRate / 8);
-    console.log(bitRate / 8);
-    const readable = fs.createReadStream(this.currTrack, { highWaterMark: 3 });
+    try {
+      const bitRate = await this.getBitRate();
+      const throttle = new Throttle(bitRate / 8);
+      const readable = fs.createReadStream(this.currTrack);
+      const writeable = new PassThrough();
 
-    // readableHighWaterMark = bitRate / 8;
+      // readable.pipe(writeable);
+      readable.pipe(throttle);
 
-    const pass = PassThrough();
+      throttle.on("data", (chunk) => {
+        this.broadcast(chunk);
+      });
 
-    console.log(pass.readableHighWaterMark);
-    pass.on("readable", () => {
-      // console.log(pass._readableState.length);
-      const chunk = pass.read(bitRate / 8);
-      if (chunk) console.log(chunk);
-    });
+      throttle.on(
+        "end",
+        () => {
+          setTimeout(() => {
+            this.nextTrack();
+          });
+        },
+        1000
+      );
+      // writeable.on("readable", () => {
+      //   setInterval(() => {
+      //     const chunk = writeable.read(bitRate / 8);
+      //     this.broadcast(chunk);
+      //   }, 1000);
+      // });
 
-    pass.on("pipe", (src) => {});
+      // writeable.on("end", () => {
+      //   setTimeout(() => {
+      //     this.nextTrack();
+      //   }, 2000);
+      // });
+      // // readableHighWaterMark = bitRate / 8;
 
-    pass.on("data", (chunk) => {
-      // console.log(chunk.length);
-    });
+      // const pass = PassThrough();
 
-    // pass.on("end", () => {
-    //   this.nextTrack();
-    // });
+      // console.log(pass.readableHighWaterMark);
+      // pass.on("readable", () => {
+      //   // console.log(pass._readableState.length);
+      //   const chunk = pass.read(bitRate / 8);
+      //   if (chunk) console.log(chunk);
+      // });
 
-    readable.pipe(pass);
+      // pass.on("pipe", (src) => {});
 
-    // readable.pipe(pass).on("data", (chunk) => {
-    //   this.nextTrack();
-    // });
+      // pass.on("data", (chunk) => {
+      //   // console.log(chunk.length);
+      // });
 
-    // const pass = new Stream.PassThrough();
-    // var end = 0;
-    // ffmpeg(this.currTrack)
-    //   .format("mp3")
-    //   .on("start", function (nextTrack = this.nextTrack, cmd) {
-    //     console.log("Started " + cmd);
-    //     console.log(nextTrack);
-    //   })
-    //   .on("error", function (err) {
-    //     console.log("An error occurred: " + err.message);
-    //   })
-    //   .on("end", function (nextTrack = this.nextTrack) {
-    //     console.log("Finished encoding");
-    //     console.log(nextTrack);
-    //     nextTrack();
-    //   })
-    //   .stream(pass);
-    // var end = 0;
-    // const run = () => {
-    //   let chunk = readable.read(bitRate / 8);
+      // // pass.on("end", () => {
+      // //   this.nextTrack();
+      // // });
 
-    //   // console.log(end);
-    //   // if (!chunk && !end) {
-    //   //   end = 1;
-    //   // } else if (!chunk && end) {
-    //   //   console.log(chunk);
-    //   //   end = 0;
-    //   //   this.nextTrack();
-    //   // }
-    //   if (!chunk) this.nextTrack();
-    //   this.broadcast(chunk);
-    // };
-    // setInterval(run, 1000);
+      // readable.pipe(pass);
+
+      // readable.pipe(pass).on("data", (chunk) => {
+      //   this.nextTrack();
+      // });
+
+      // const pass = new Stream.PassThrough();
+      // var end = 0;
+      // ffmpeg(this.currTrack)
+      //   .format("mp3")
+      //   .on("start", function (nextTrack = this.nextTrack, cmd) {
+      //     console.log("Started " + cmd);
+      //     console.log(nextTrack);
+      //   })
+      //   .on("error", function (err) {
+      //     console.log("An error occurred: " + err.message);
+      //   })
+      //   .on("end", function (nextTrack = this.nextTrack) {
+      //     console.log("Finished encoding");
+      //     console.log(nextTrack);
+      //     nextTrack();
+      //   })
+      //   .stream(pass);
+      // var end = 0;
+      // const run = () => {
+      //   let chunk = readable.read(bitRate / 8);
+
+      //   // console.log(end);
+      //   // if (!chunk && !end) {
+      //   //   end = 1;
+      //   // } else if (!chunk && end) {
+      //   //   console.log(chunk);
+      //   //   end = 0;
+      //   //   this.nextTrack();
+      //   // }
+      //   if (!chunk) this.nextTrack();
+      //   this.broadcast(chunk);
+      // };
+      // setInterval(run, 1000);
+    } catch {
+      this.startStreaming();
+    }
   };
 
   this.startStreaming = function () {
-    this.currTrack = path.join(
-      path.dirname(require.main.filename),
-      "media",
-      this.playlist[this.currTrackIndex].file
-    );
-    this.currTrackIndex++;
-    this.playTrack();
+    try {
+      this.currTrack = path.join(
+        path.dirname(require.main.filename),
+        "public",
+        "media",
+        this.playlist[this.currTrackIndex].file
+      );
+      this.currTrackIndex++;
+      this.playTrack();
+    } catch {
+      this.startStreaming();
+    }
   };
 
   this.broadcast = function (chunk) {
-    if (chunk) {
-      for (consumer of this.consumers) {
-        consumer.write(chunk);
+    try {
+      if (chunk) {
+        for (consumer of this.consumers) {
+          consumer.write(chunk);
+        }
       }
+    } catch {
+      this.startStreaming();
     }
   };
 }

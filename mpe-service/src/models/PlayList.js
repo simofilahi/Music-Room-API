@@ -7,14 +7,13 @@ const playListSchema = new Schema({
   name: {
     type: String,
     required: true,
-    minlength: [1, "name should not be less than 1 char"],
-    maxlength: [24, "name should not be greater than 24 char"],
+    minLength: [1, "name should not be less than 1 char"],
+    maxLength: [24, "name should not be greater than 24 char"],
+    unique: [true, "name of playlist must be unique"],
   },
   desc: {
     type: String,
-    required: true,
-    minlength: [1, "desc should not be less than 1 char"],
-    maxlength: [255, "desc should not be greater than 24 char"],
+    maxLength: [255, "desc should not be greater than 24 char"],
   },
   image: { type: String },
   musicPreference: {
@@ -23,7 +22,7 @@ const playListSchema = new Schema({
   },
   tracks: [
     {
-      trackId: { type: String, unique: true },
+      trackId: { type: String },
       name: { type: String },
       artists: { type: Array },
       images: { type: Array },
@@ -32,7 +31,7 @@ const playListSchema = new Schema({
       order: { type: Number },
     },
   ],
-  visbility: {
+  visibility: {
     type: String,
     enum: ["private", "public"],
     default: "public",

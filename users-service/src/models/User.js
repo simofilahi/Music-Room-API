@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const saltRounds = 10;
 
 // USER SCHEMA
@@ -22,7 +22,6 @@ const userSchema = mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, "password is required"],
       minLength: [8, "Password must be greather than 8 char"],
       maxLength: [24, "Password must be smaller than 24 char"],
       match: [
@@ -54,7 +53,8 @@ const userSchema = mongoose.Schema(
 
 // HASH PASSWORD
 userSchema.pre("save", async function () {
-  this.password = await bcrypt.hash(this.password, saltRounds);
+  if (this.password)
+    this.password = await bcrypt.hash(this.password, saltRounds);
 });
 
 // GENERATE JWT TOKEN
