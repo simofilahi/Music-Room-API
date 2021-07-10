@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const app = express();
 const bodyParser = require("body-parser");
 const server = require("http").createServer(app);
+const cors = require("cors");
 // const Events = require("./utils/events");
 // const Event = require("./utils/event");
 
@@ -19,18 +20,7 @@ require("./src/config/connection");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// CORS ALLOW INCOMING REQUEST
-app.use(function (req, res, next) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Max-Age", "1800");
-  res.setHeader("Access-Control-Allow-Headers", "content-type");
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "PUT, POST, GET, DELETE, PATCH, OPTIONS"
-  );
-  next();
-});
+app.use(cors());
 
 // SOCKET
 require("./src/socket/socket")(server);

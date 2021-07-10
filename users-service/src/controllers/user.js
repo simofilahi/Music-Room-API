@@ -1,11 +1,11 @@
 const User = require("../models/User");
 const asyncHandler = require("../helper/asyncHandler");
-const { OAuth2Client } = require("google-auth-library");
 const genCode = require("../helper/genCode");
 const sendConfirmationEmail = require("../helper/sendEmailConfirmation");
 const ErrorResponse = require("../helper/ErrorResponse");
 const uploadPhoto = require("../middleware/upload");
 const path = require("path");
+const axios = require("axios");
 
 //@DESC REGISTER A USER
 //@ROUTE POST /api/auth/register
@@ -29,7 +29,7 @@ exports.register = asyncHandler(async (req, res, next) => {
   // CREATE DOC
   const user = new User({
     email,
-    password: password,
+    // password: password,
     mailConfCode: code,
   });
 
@@ -126,41 +126,161 @@ exports.me = asyncHandler(async (req, res, next) => {
 //@ROUTE POST /api/auth/google
 //@ACCESS PUBLIC
 exports.googleAuth = asyncHandler(async (req, res, next) => {
+  // ABOVE IMPLENTATION WORK WITH PRIVATE API
   // TOKEN DESTRUCTION
-  const { idToken } = req.body;
+  // const { idToken } = req.body;
+  // // AUTH TO GOOGLE API
+  // const client = new OAuth2Client(process.env.GOOGLE_CONSUMER_KEY);
+  // // VERIFY TOKEN
+  // const ticket = await client.verifyIdToken({ idToken });
+  // // VARIABLES DESTRUCTION
+  // const { email, picture } = ticket.getPayload();
+  // // SEARCH FOR USER IN DB
+  // const user = await User.findOne({ email });
+  // // IF USER DOESN'T EXIST
+  // if (!user) {
+  //   // CREATE A DOC
+  //   const user = User({
+  //     email,
+  //     picture,
+  //   });
+  //   // SAVE DOC
+  //   const data = await user.save();
+  //   // SEND RESPONSE
+  //   if (data) return res.status(201).send({ success: true });
+  // }
+  // // GENERATE TOKEN
+  // await user.generateToken();
+  // // SEND RESPONSE
+  // res.status(200).send({ success: true, data: user });
 
-  // AUTH TO GOOGLE API
-  const client = new OAuth2Client(process.env.GOOGLE_CONSUMER_KEY);
+  // VARIABLE DESTRUCTION
+  const { accessToken } = req.body;
 
   // VERIFY TOKEN
-  const ticket = await client.verifyIdToken({ idToken });
+  if (!accessToken)
+    return next(
+      new ErrorResponse({ status: 400, message: "Please provide accessToken" })
+    );
 
-  // VARIABLES DESTRUCTION
-  const { email, picture } = ticket.getPayload();
+  // GOOGLE API URL
+  const url = `https://www.googleapis.com/oauth2/v1/userinfo`;
 
-  // SEARCH FOR USER IN DB
+  const data = await axios.get(url, {
+    headers: {
+      authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  // VERIFY RESPONSE STATUS
+  if (data.status != 200)
+    return next(
+      new ErrorResponse({
+        status: 400,
+        message: "Please provide valid accessToken",
+      })
+    );
+  // VARIABLE DESTRUCTION
+  const { email, name, picture } = data.data;
+
   const user = await User.findOne({ email });
+  if (user) {
+    // GENERATE TOKEN
+    const token = await user.generateToken();
 
-  // IF USER DOESN'T EXIST
-  if (!user) {
-    // CREATE A DOC
-    const user = User({
-      email,
-      picture,
-    });
-
-    // SAVE DOC
-    const data = await user.save();
-
-    // SEND RESPONSE
-    if (data) return res.status(201).send({ success: true });
+    // SAVE TOKEN AND UPDATE
+    const data = await User.findOneAndUpdate(
+      { email },
+      {
+        $set: { token: token, status: "online" },
+      },
+      { new: true }
+    );
+    return res.status(200).send({ success: true, data: data });
   }
 
-  // GENERATE TOKEN
-  await user.generateToken();
+  // CREATE NEW USER DOC
+  const newUser = new User({
+    email,
+    username: name,
+    picture: picture,
+    status: "online",
+    isVerified: true,
+  });
+
+  // GENERATE MAIL CONF TOKEN
+  newUser.token = await newUser.generateToken();
+
+  // SAVE DOC
+  await newUser.save();
 
   // SEND RESPONSE
-  res.status(200).send({ success: true, data: user });
+  res.status(200).send({ success: true, data: newUser });
+});
+
+//@DESC REGISTER OR LOGIN A USER BY FACEBOOK OAUTH
+//@ROUTE POST /api/auth/facebook
+//@ACCESS PUBLIC
+exports.facebookAuth = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { accessToken } = req.body;
+
+  // VERIFY TOKEN
+  if (!accessToken)
+    return next(
+      new ErrorResponse({ status: 400, message: "Please provide accessToken" })
+    );
+
+  // FACEBOOK URL TO GET USER INFORMATIONS
+  const url = `https://graph.facebook.com/me?access_token=${accessToken}&fields=name%2Cemail%2Cpicture`;
+
+  // CALL FB API
+  const data = await axios.get(url);
+
+  // VERIFY RESPONSE STATUS
+  if (data.status != 200)
+    return next(
+      new ErrorResponse({
+        status: 400,
+        message: "Please provide valid accessToken",
+      })
+    );
+  // VARIABLE DESTRUCTION
+  const { email, name } = data.data;
+
+  const user = await User.findOne({ email });
+  if (user) {
+    // GENERATE TOKEN
+    const token = await user.generateToken();
+
+    // SAVE TOKEN AND UPDATE
+    const data = await User.findOneAndUpdate(
+      { email },
+      {
+        $set: { token: token, status: "online" },
+      },
+      { new: true }
+    );
+    return res.status(200).send({ success: true, data: data });
+  }
+
+  // CREATE NEW USER DOC
+  const newUser = new User({
+    email,
+    username: name,
+    picture: data.data.picture.data.url,
+    status: "online",
+    isVerified: true,
+  });
+
+  // GENERATE MAIL CONF TOKEN
+  newUser.token = await newUser.generateToken();
+
+  // SAVE DOC
+  await newUser.save();
+
+  // SEND RESPONSE
+  res.status(200).send({ success: true, data: newUser });
 });
 
 //@DESC REGISTER OR LOGIN A USER BY GOOGLE OAUTH
@@ -435,4 +555,22 @@ exports.getPhoto = asyncHandler(async (req, res, next) => {
         .send({ status: false, message: "File can not be downloaded " });
     }
   });
+});
+
+//@DESC SEARCH FOR USER
+//@ROUTE GET /api/users/search
+//@ACCESS PRIVATE
+exports.userSearch = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  let { page = 1, limit = 10, username = "" } = req.query;
+  page = parseInt(page);
+  limit = parseInt(limit);
+
+  const data = await User.find({
+    username: { $regex: username },
+  })
+    .limit(limit)
+    .skip((page - 1) * 10);
+
+  res.status(200).send({ succes: true, data });
 });

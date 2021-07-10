@@ -21,15 +21,15 @@ spec:
       #   backend:
       #     serviceName: mpe-service
       #     servicePort: 4002
-      # - path: /api/mtv
-      #   backend:
-      #     serviceName: mtv-service
-      #     servicePort: 4003
-      - path: /api/users
+      - path: /api/events
+        backend:
+          serviceName: mtv-service
+          servicePort: 4003
+      - path: '{{ items }}'
         backend:
           serviceName: users-service
           servicePort: 4004
-      - path: /api/auth/register
-        backend:
-          serviceName: users-service
-          servicePort: 4004
+
+items:
+  - /api/auth/register
+  - /api/auth/login

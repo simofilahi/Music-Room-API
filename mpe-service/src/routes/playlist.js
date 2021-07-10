@@ -8,11 +8,13 @@ const accessMiddleware = require("../middleware/access");
 router.post("/playlists", authMiddleware.isAuth, playListController.create);
 
 // GET PLAYLISTS
+router.get("/playlists", authMiddleware.isAuth, playListController.getAll);
+
+// GET MY-PLAYLISTS
 router.get(
-  "/playlists",
+  "/my-playlists",
   authMiddleware.isAuth,
-  accessMiddleware.access,
-  playListController.getAll
+  playListController.getMyPlayList
 );
 
 // GET A PLAYLIST
@@ -33,6 +35,13 @@ router.delete(
 // EDIT PLAYLIST
 router.put("/playlists/:id", authMiddleware.isAuth, playListController.edit);
 
+// PLAYLIST INVITED USERS
+router.post(
+  "/playlists/:id/invite",
+  authMiddleware.isAuth,
+  playListController.invite
+);
+
 // ADD TRACK TO PLAY LIST
 router.post(
   "/playlists/:id/track",
@@ -49,15 +58,12 @@ router.delete(
   playListController.deleteTrack
 );
 
-// PLAYLIST INVITED USERS
-router.post(
-  "/playlists/:id/invite",
-  authMiddleware.isAuth,
-  playListController.invite
-);
-
 // UPLOAD PLAYLIST PHOTO
-router.post("/playlists/:id/upload", playListController.uploadPhoto);
+router.post(
+  "/playlists/:id/upload",
+  authMiddleware.isAuth,
+  playListController.uploadPhoto
+);
 
 // GET PLAYLIST PHOTO
 router.get("/playlists/photos/:name", playListController.getPhoto);

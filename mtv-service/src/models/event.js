@@ -1,15 +1,17 @@
 const mongoose = require("mongoose");
 
 const eventSchema = new mongoose.Schema({
-  ownersId: [mongoose.Types.ObjectId],
+  ownerId: mongoose.Types.ObjectId,
   name: {
     type: String,
-    minlength: [1, "name should not be less than 1"],
-    maxlength: [24, "name should not be longer than 255 char"],
+    required: true,
+    minLength: [1, "name should not be less than 1 char"],
+    maxLength: [24, "name should not be greater than 24 char"],
+    unique: [true, "name of playlist must be unique"],
   },
   desc: {
     type: String,
-    maxlength: [255, "Desc should not be longer than 255 char"],
+    maxLength: [255, "desc should not be greater than 24 char"],
   },
   image: { type: String },
   subscribes: [mongoose.Types.ObjectId],
@@ -18,6 +20,7 @@ const eventSchema = new mongoose.Schema({
     type: Array,
     // enum: ["Pop", "Jaz", "Classical", "Dance"],
   },
+  invitedUsers: [mongoose.Types.ObjectId],
   chatRoom: {
     type: Object,
     roomId: mongoose.Types.ObjectId,
@@ -40,7 +43,7 @@ const eventSchema = new mongoose.Schema({
     {
       artists: Array,
       name: String,
-      trackId: { type: String, unique: true },
+      trackId: { type: String },
       preview_url: String,
       popularity: Number,
       file: String,
@@ -55,6 +58,11 @@ const eventSchema = new mongoose.Schema({
   trackUrl: {
     type: String,
     default: null,
+  },
+  visibility: {
+    type: String,
+    enum: ["private", "public"],
+    default: "public",
   },
 });
 
