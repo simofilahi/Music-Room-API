@@ -15,16 +15,10 @@ const socketInit = (server) => {
   });
 };
 
-// JOIN A CHAT ROOM
-const joinToEvent = (socket) => {
-  socket.on("join", (eventId) => {
-    socket.join(eventId);
-  });
-};
-
 // RECIEVE INCOMING MESSAGES
-const incomingMessage = async ({ socket, io }) => {
+const incomingMessage = async ({ socket, io, data }) => {
   try {
+    console.log("INCOMING MESSAGES");
     // VARIABLE DESTRUCTION
     const { message, eventId, name } = data;
 
@@ -42,21 +36,22 @@ const incomingMessage = async ({ socket, io }) => {
     );
 
     //IF EVENT NOT EXIST
-    if (!event) return io.emit("Error", "no event found");
+    if (!event)
+      return io.emit("Error", { success: false, message: "no event found" });
 
+    console.log("Test");
     // SEND MESSAGE TO ALL USERS JOINED IN A ROOM
     io.to(eventId).emit("new message", { message, name });
   } catch {
     // EMIR ERROR MESSAGE
-    socket.emit("error", {
+    return socket.emit("error", {
       success: false,
       message: "Error occurred please try again",
     });
   }
 };
 
-const trackVote = async ({ socket, io }) => {
-  console.log("track-vote");
+const trackVote = async ({ socket, io, data }) => {
   try {
     // VARIABLE DESTRUCTION
     const { eventId, trackId } = data;
@@ -84,12 +79,13 @@ const trackVote = async ({ socket, io }) => {
     if (EventStore[eventId])
       EventStore[eventId].updatePlaylist(event["playlist"]);
 
+    console.log("HOHOHOHOHO");
     // EMIT DATA TO CLIENTS;
     io.to(eventId).emit("event-updated", [event]);
   } catch (err) {
     console.log(err);
     // SEND ERROR MESSAGE
-    socket.emit("error", {
+    return socket.emit("error", {
       success: false,
       message: "Error occurred please try again",
     });
@@ -138,7 +134,7 @@ const addTrack = async ({ data, socket, io }) => {
     io.to(eventId).emit("event-updated", event);
   } catch {
     // SEND ERROR MESSAGE
-    socket.emit("error", {
+    return socket.emit("error", {
       success: false,
       message: "Error occurred please try again",
     });
@@ -186,7 +182,7 @@ const removeTrack = async ({ socket, io, data }) => {
     // EMIT DATA TO CLIENTS;
     io.to(eventId).emit("event-updated", [event]);
   } catch {
-    socket.emit("error", {
+    return socket.emit("error", {
       success: false,
       message: "Error occurred please try again",
     });
@@ -203,13 +199,46 @@ module.exports = (server) => {
       io.emit("authenticated", { success: true, message: "authorized" });
       // MIDDLEWARE TO VERIFY A USER HAS AN ACCESS
       // FUNCTION HANDLER FOR EVERY EVENT
-      console.log("HELLO ******************");
+
       socket
-        .use(hasAccess)
-        .on("remove-track", (data) => removeTrack({ socket, io, data }))
-        .on("add-track", (data) => addTrack({ socket, io, data }))
-        .on("message", (data) => incomingMessage({ socket, io, data }))
-        .on("track-vote", (data) => trackVote({ socket, io, data }));
+        .use((data, next) => hasAccess({ data, next, socket }))
+        .on("join", (eventId) => {
+          socket.join(eventId);
+        })
+        .on("remove-track", (data) => {
+          if (socket.client.access.includes("remove-track"))
+            removeTrack({ socket, io, data });
+          return socket.emit("error", {
+            success: false,
+            message: "You don't have the permissin to remove this track",
+          });
+        })
+        .on("add-track", (data) => {
+          if (socket.client.access.includes("add-track"))
+            addTrack({ socket, io, data });
+          return socket.emit("error", {
+            success: false,
+            message: "You don't have the permissin to add a track",
+          });
+        })
+        .on("message", (data) => {
+          console.log(data);
+          if (socket.client.access.includes("messages"))
+            incomingMessage({ socket, io, data });
+          else
+            return socket.emit("error", {
+              success: false,
+              message: "You don't have the permissin to add a track",
+            });
+        })
+        .on("track-vote", (data) => {
+          if (socket.client.access.includes("vote"))
+            trackVote({ socket, io, data });
+          return socket.emit("error", {
+            success: false,
+            message: "You don't have the permissin to track for this track",
+          });
+        });
     } else {
       io.emit("authenticated", { success: false, message: "unauthorized" });
       socket.disconnect();
