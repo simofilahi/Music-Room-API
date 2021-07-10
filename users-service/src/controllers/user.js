@@ -29,7 +29,7 @@ exports.register = asyncHandler(async (req, res, next) => {
   // CREATE DOC
   const user = new User({
     email,
-    // password: password,
+    password: password,
     mailConfCode: code,
   });
 
@@ -323,6 +323,8 @@ exports.mailConfirmation = asyncHandler(async (req, res, next) => {
 
   // VERIFY CONFIRMATION CODE
   if (user.mailConfCode === code) {
+    // GENERATE TOKEN
+    const token = await user.generateToken();
     // UPDATE DATA
     await user.updateOne({
       $set: {
@@ -330,6 +332,7 @@ exports.mailConfirmation = asyncHandler(async (req, res, next) => {
         mailConfCode: null,
         status: "online",
         mailConfToken: null,
+        token
       },
     });
 
