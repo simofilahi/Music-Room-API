@@ -19,10 +19,10 @@ spec:
         image: event-bus-image
         ports:
           - containerPort: 4000
-      - name: mongodb
-        image: mongo
-        ports:
-          - containerPort: 27017
+      # - name: mongodb
+      #   image: mongo
+      #   ports:
+      #     - containerPort: 27017
 ---
 
 # apiVersion: apps/v1
@@ -73,10 +73,10 @@ spec:
         image: mpe-image
         ports:
           - containerPort: 4002
-      - name: mongodb
-        image: mongo
-        ports:
-          - containerPort: 27017
+      # - name: mongodb
+      #   image: mongo
+      #   ports:
+      #     - containerPort: 27017
 ---
 
 apiVersion: apps/v1
@@ -100,10 +100,10 @@ spec:
         image: mtv-image
         ports:
           - containerPort: 4003
-      - name: mongodb
-        image: mongo
-        ports:
-          - containerPort: 27017
+      # - name: mongodb
+      #   image: mongo
+      #   ports:
+      #     - containerPort: 27017
 ---
 
 apiVersion: apps/v1
@@ -131,10 +131,10 @@ spec:
           image: users-image
           ports:
             - containerPort: 4004
-        - name: mongodb
-          image: mongo
-          ports:
-            - containerPort: 27017
+        # - name: mongodb
+        #   image: mongo
+        #   ports:
+        #     - containerPort: 27017
           # volumeMounts:
           #   - mountPath: /data/db
           #     name: db-storage
@@ -165,7 +165,7 @@ spec:
           image: tracks-image
           ports:
             - containerPort: 4005
-        - name: mongodb
-          image: mongo
-          ports:
-            - containerPort: 27017
+        # - name: mongodb
+        #   image: mongo
+        #   ports:
+        #     - containerPort: 27017

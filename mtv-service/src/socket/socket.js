@@ -59,7 +59,8 @@ const trackVote = async ({ socket, io, data }) => {
     // LOOK FOR EVENT AND UPDATE VOTE COUNT FOR A TRACK
     let event = await EventModel.findOneAndUpdate(
       { _id: eventId, "playlist.trackId": trackId },
-      { $inc: { "playlist.$.vote": 1 } },
+      { $inc: { "playlist.vote.count": 1 } },
+      { $addToSet: { "playlist.vote.users": socket.client.id } },
       { new: true }
     );
 
@@ -206,6 +207,7 @@ module.exports = (server) => {
           socket.join(eventId);
         })
         .on("remove-track", (data) => {
+          // VERIFY THE PERMISSIONS
           if (socket.client.access.includes("remove-track"))
             removeTrack({ socket, io, data });
           return socket.emit("error", {
@@ -214,6 +216,7 @@ module.exports = (server) => {
           });
         })
         .on("add-track", (data) => {
+          // VERIFY THE PERMISSIONS
           if (socket.client.access.includes("add-track"))
             addTrack({ socket, io, data });
           return socket.emit("error", {
@@ -222,7 +225,7 @@ module.exports = (server) => {
           });
         })
         .on("message", (data) => {
-          console.log(data);
+          // VERIFY THE PERMISSIONS
           if (socket.client.access.includes("messages"))
             incomingMessage({ socket, io, data });
           else
@@ -232,6 +235,7 @@ module.exports = (server) => {
             });
         })
         .on("track-vote", (data) => {
+          // VERIFY THE PERMISSIONS
           if (socket.client.access.includes("vote"))
             trackVote({ socket, io, data });
           return socket.emit("error", {
