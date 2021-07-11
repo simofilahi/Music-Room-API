@@ -48,7 +48,10 @@ const eventSchema = new mongoose.Schema({
       popularity: Number,
       file: String,
       images: [],
-      vote: { type: Number, default: 0 },
+      vote: {
+        count: { type: Number, default: 0 },
+        users: [mongoose.Types.ObjectId],
+      },
     },
   ],
   status: {
