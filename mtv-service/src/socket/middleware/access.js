@@ -21,12 +21,10 @@ const hasAccess = async ({ data, socket, next }) => {
   // IF PLAYLIST VISIBILITY PUBLIC
   if (event.visbility === "public") next();
 
-  console.log("2");
   // SEARCH FOR A IF ALERDAY IN INVITED USER IN A PLAYLIST
   const eventData = await Event.findOne({
     $or: [{ ownerId: userId }, { invitedUsers: { $in: [userId] } }],
   });
-  console.log("3");
 
   //   VERIFIY IF DATA NOT EXSIT
   if (!eventData)
@@ -35,9 +33,21 @@ const hasAccess = async ({ data, socket, next }) => {
       message: "Forbidden operatio",
     });
 
-  // ADD ACCESS
-  socket.client.access = ["messages", "vote", "remove-track", "add-track"];
+  // CHECK A USER IF ALERDAY VOTED FOR A TRACK
+  if (data[0] === "track-vote") {
+    const { trackId } = data[1];
 
+    const userHasAvote = Event.findOne({
+      _id: eventId,
+      "playlist.trackId": trackId,
+      "playlist.vote.users": { $in: [userId] },
+    });
+
+    if (!userHasAvote) socket.client.access.push("vote");
+  }
+
+  // ADD MESSAGES ACCESS
+  socket.client.access.push("messages");
   console.log(socket.client.access);
   // GO TO NEXT
   next();
