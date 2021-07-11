@@ -1,6 +1,6 @@
 const EventModel = require("../models/Event");
 const asyncHandler = require("../helper/asyncHandler");
-const ErrorResponse = require("../helper/errorResponse");
+const ErrorResponse = require("../helper/ErrorResponse");
 const axios = require("axios");
 const downloadFile = require("../utils/downloadTrack");
 const EventObject = require("../utils/eventObject");

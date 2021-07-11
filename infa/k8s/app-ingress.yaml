@@ -11,14 +11,17 @@ spec:
   - http:
       paths:
       - path: /api/playlists
+        pathType: Prefix
         backend:
           serviceName: mpe-service
           servicePort: 4002
-      - path: /api/events/*
+      - path: /api/events
+        pathType: Prefix
         backend:
           serviceName: mtv-service
           servicePort: 4003
       - path: /api/tracks
+        pathType: Prefix
         backend:
           serviceName: tracks-service
           servicePort: 4005
