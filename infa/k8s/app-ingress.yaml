@@ -4,32 +4,25 @@ metadata:
   name: ingress-myservice
   annotations:
     # use the shared ingress-nginx
+    nginx.ingress.kubernetes.io/use-regex: "true"
     kubernetes.io/ingress.class: "nginx"
 spec:
   rules:
   - http:
       paths:
-      # - path: /api/event-bus
-      #   backend:
-      #     serviceName: event-bus-service
-      #     servicePort: 4000
-      # - path: /api/mcd
-      #   backend:
-      #     serviceName: mcd-service
-      #     servicePort: 4001
-      # - path: /api/mpe
-      #   backend:
-      #     serviceName: mpe-service
-      #     servicePort: 4002
-      - path: /api/events
+      - path: /api/playlists
+        backend:
+          serviceName: mpe-service
+          servicePort: 4002
+      - path: /api/events/*
         backend:
           serviceName: mtv-service
           servicePort: 4003
-      - path: '{{ items }}'
+      - path: /api/tracks
+        backend:
+          serviceName: tracks-service
+          servicePort: 4005
+      - path: /api/*
         backend:
           serviceName: users-service
           servicePort: 4004
-
-items:
-  - /api/auth/register
-  - /api/auth/login
