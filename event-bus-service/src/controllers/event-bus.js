@@ -1,13 +1,20 @@
 const asyncHandler = require("../helper/asyncHandler");
-const errorResponse = require("../helper/errorResponse");
+const errorResponse = require("../helper/ErrorResponse");
 const axios = require("axios");
 
 // @DESC VERIFY USER IS AUTH
 // @ROUTE GET /api/event-bus/auth
 // @ACCESS PRIVATE
 exports.isAuth = asyncHandler(async (req, res, next) => {
-  // REDIRECT REQ TO USER_SERVICE
-  res.redirect(`${process.env.USER_SEVICE}/api/me`);
+  // ADD TOKEN TO HEADER
+  const config = {
+    headers: {
+      authorization: req.headers.authorization,
+    },
+  };
+  const data = await axios.get(`${process.env.USER_SEVICE}/api/me`, config);
+
+  res.status(200).send(data.data);
 });
 
 // @DESC VERIFY USER IS EXIST
@@ -23,7 +30,7 @@ exports.users = asyncHandler(async (req, res, next) => {
 
 // @DESC GET TRACK INFOS
 // @ROUTE GET /api/tracks/:id
-// @ACCESS PRIVATE
+// @ACCESS PUBLIC
 exports.getTrackInfos = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { id: trackId } = req.params;

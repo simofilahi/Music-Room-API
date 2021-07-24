@@ -33,6 +33,10 @@ const userRoutes = require("./routes/user");
 // ERROR HANDLER MIDDLEWARE
 const errorHandler = require("./middleware/errorHandler");
 
+app.get("/api/users", (req, res, next) => {
+  res.status(200).send("<h1>Hello world</h1>");
+});
+
 app.use("/api", userRoutes, errorHandler);
 
 // TEST ROUTE

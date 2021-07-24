@@ -6,7 +6,7 @@ const ErrorResponse = require("../helper/ErrorResponse");
 // AUTHORIZATION MIDDLEWARE
 exports.sessionToken = asyncHandler(async (req, res, next) => {
   // VERIFY AUTHORIZATION HEADER TOKEN IF IT'S FOUND
-  console.log("I'M HERE");
+
   if (!req.headers.authorization)
     return next(
       new ErrorResponse({ status: 400, message: "No token provided" })
