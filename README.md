@@ -16,6 +16,11 @@ Project is created with:
 
 See the [Getting Started](https://documenter.getpostman.com/view/10811880/TzY68Z8M) document.
 
+## Environment variables:
+> NOTE: Contact admin to get the password
+
+Use scripts ```.env_decryption.sh``` and ```.env_encryption.sh```
+
 ## Setup Dev environment
 
 Follow these instructions to run this project locally on MacOS:
