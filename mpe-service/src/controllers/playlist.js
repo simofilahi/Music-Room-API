@@ -1,4 +1,4 @@
-const Playlist = require("../models/Playlist");
+const Playlist = require("../models/PlayList");
 const asyncHandler = require("../helper/asyncHandler");
 const axios = require("axios");
 const ErrorResponse = require("../helper/ErrorResponse");
