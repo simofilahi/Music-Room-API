@@ -1,6 +1,6 @@
 const asyncHandler = require("../helper/asyncHandler");
 const ErrorResponse = require("../helper/ErrorResponse");
-const Playlist = require("../models/Playlist");
+const Playlist = require("../models/PlayList");
 
 // CHECK IF USER IS GARANTED TO DO SOME OPERATION
 exports.access = asyncHandler(async (req, res, next) => {
