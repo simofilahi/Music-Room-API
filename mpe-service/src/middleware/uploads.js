@@ -16,7 +16,8 @@ const storage = multer.diskStorage({
     let extname = "";
     if (file.mimetype === "image/png") extname = "png";
     else if (file.mimetype === "image/jpeg") extname = "jpeg";
-    else return cb(new Error("File type must be .png or jpeg"));
+    else if (file.mimetype === "image/jpg") extname = "jpg";
+    else return cb(new Error("File type must be .png or jpeg or jpg"));
     cb(null, file.fieldname + "-" + Date.now() + `.${extname}`);
   },
 });
