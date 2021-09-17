@@ -37,3 +37,14 @@ exports.getTrackInfos = asyncHandler(async (req, res, next) => {
 
   res.redirect(`${process.env.TRACK_SERVICE}/api/tracks/${trackId}`);
 });
+
+// @DESC UPLOAD PHOTOS
+// @ROUTE POST /api/media
+// @ACCESS PUBLIC
+exports.upload = asyncHandler(async (req, res, next) => {
+  console.log("Hello event-bus");
+  // console.log({ req });
+  const url = `${process.env.SMS_SERVICE}/api/media`;
+
+  res.redirect(307, url);
+});

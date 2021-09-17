@@ -52,12 +52,20 @@ build:
        manual: 
         - src: /src/**/*.js
           dest: "."
+  - image: sms-image
+    context: static-media-service
+    docker:
+      dockerfile: Dockerfile
+    sync:
+       manual: 
+        - src: /src/**/*.js
+          dest: "."
 deploy:
   kubectl:
     manifests:
     # - infa/k8s/storageClass.yaml
-    # - infa/k8s/db-pv.yaml
-    # - infa/k8s/db-pv-claim.yaml
+    - infa/k8s/sms-pv.yaml
+    - infa/k8s/sms-pv-claim.yaml
     - infa/k8s/app-deployment.yaml
     - infa/k8s/app-ingress.yaml
     - infa/k8s/app-service.yaml

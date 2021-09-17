@@ -332,7 +332,7 @@ exports.mailConfirmation = asyncHandler(async (req, res, next) => {
         mailConfCode: null,
         status: "online",
         mailConfToken: null,
-        token
+        token,
       },
     });
 
@@ -505,34 +505,38 @@ exports.user = asyncHandler(async (req, res, next) => {
 //@ACCESS PRIVATE
 exports.uploadPhoto = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
-  const { id: userId } = req.user;
+  // const { id: userId } = req.user;
 
   // UPLOAD PHOTO
-  await uploadPhoto(req, res);
+  // await uploadPhoto(req, res);
 
-  // VERIFY FILE
-  if (!req.file)
-    return res
-      .status(400)
-      .send({ status: false, message: "please upload a photo" });
+  // // VERIFY FILE
+  // if (!req.file)
+  //   return res
+  //     .status(400)
+  //     .send({ status: false, message: "please upload a photo" });
 
-  var url = `${req.protocol}://${req.get("host")}/api/profile/${
-    req.file.filename
-  }`;
+  // var url = `${req.protocol}://${req.get("host")}/api/profile/${
+  //   req.file.filename
+  // }`;
 
-  // UPDATE PHOTO URL
-  const user = await User.findOneAndUpdate(
-    { _id: userId },
-    { $set: { picture: url } },
-    { new: true }
-  );
+  //   const url = `${EVENT_BUS_SERVICE}/api/media`;
 
-  // VERIFY EXISTANCE OF USER
-  if (!user)
-    return next(new ErrorResponse({ status: 401, message: "user not found" }));
+  //  const data = axios.
+
+  // // UPDATE PHOTO URL
+  // const user = await User.findOneAndUpdate(
+  //   { _id: userId },
+  //   { $set: { picture: url } },
+  //   { new: true }
+  // );
+
+  // // VERIFY EXISTANCE OF USER
+  // if (!user)
+  //   return next(new ErrorResponse({ status: 401, message: "user not found" }));
 
   // SEND RESPONSE
-  res.status(200).send({ succes: true, data: user });
+  res.status(200).send({ succes: true, data: "" });
 });
 
 //@DESC DOWNLOAD A PHOTO
