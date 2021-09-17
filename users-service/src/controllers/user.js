@@ -3,9 +3,7 @@ const asyncHandler = require("../helper/asyncHandler");
 const genCode = require("../helper/genCode");
 const sendConfirmationEmail = require("../helper/sendEmailConfirmation");
 const ErrorResponse = require("../helper/ErrorResponse");
-const uploadPhoto = require("../middleware/upload");
 const path = require("path");
-const axios = require("axios");
 
 //@DESC REGISTER A USER
 //@ROUTE POST /api/auth/register
@@ -505,63 +503,22 @@ exports.user = asyncHandler(async (req, res, next) => {
 //@ACCESS PRIVATE
 exports.uploadPhoto = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
-  // const { id: userId } = req.user;
+  const { id: userId } = req.user;
+  const { url } = req.media;
 
-  // UPLOAD PHOTO
-  // await uploadPhoto(req, res);
-
-  // // VERIFY FILE
-  // if (!req.file)
-  //   return res
-  //     .status(400)
-  //     .send({ status: false, message: "please upload a photo" });
-
-  // var url = `${req.protocol}://${req.get("host")}/api/profile/${
-  //   req.file.filename
-  // }`;
-
-  //   const url = `${EVENT_BUS_SERVICE}/api/media`;
-
-  //  const data = axios.
-
-  // // UPDATE PHOTO URL
-  // const user = await User.findOneAndUpdate(
-  //   { _id: userId },
-  //   { $set: { picture: url } },
-  //   { new: true }
-  // );
-
-  // // VERIFY EXISTANCE OF USER
-  // if (!user)
-  //   return next(new ErrorResponse({ status: 401, message: "user not found" }));
-
-  // SEND RESPONSE
-  res.status(200).send({ succes: true, data: "" });
-});
-
-//@DESC DOWNLOAD A PHOTO
-//@ROUTE GET /api/profile/:name
-//@ACCESS PUBLIC
-exports.getPhoto = asyncHandler(async (req, res, next) => {
-  // VARIABLE DESTRUCTION
-  const { name: fileName } = req.params;
-
-  // FIND PATH OF PHOTO
-  const filePath = path.join(
-    path.dirname(require.main.filename),
-    "public",
-    "uploads",
-    fileName
+  // UPDATE PHOTO URL
+  const user = await User.findOneAndUpdate(
+    { _id: userId },
+    { $set: { picture: url } },
+    { new: true }
   );
 
-  // SEND FILE
-  res.download(filePath, (err) => {
-    if (err) {
-      res
-        .status(500)
-        .send({ status: false, message: "File can not be downloaded " });
-    }
-  });
+  // VERIFY EXISTANCE OF USER
+  if (!user)
+    return next(new ErrorResponse({ status: 401, message: "user not found" }));
+
+  // SEND RESPONSE
+  res.status(200).send({ succes: true, data: user });
 });
 
 //@DESC SEARCH FOR USER

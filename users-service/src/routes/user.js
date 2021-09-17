@@ -2,6 +2,9 @@ const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/user");
 const isAuth = require("../middleware/isAuth");
+const multer = require("multer");
+const saveMedia = require("../middleware/saveMedia");
+const upload = multer();
 
 // LOCAL AUTH
 router.post("/auth/register", userController.register);
@@ -16,17 +19,20 @@ router.post("/auth/facebook", userController.facebookAuth);
 // USER INFOS
 router.get("/me", isAuth.sessionToken, userController.me);
 
-// SEARCH FOR A PHOTO PROFILE
+// SEARCH FOR A  PROFILE
 router.get("/users/search", userController.userSearch);
 
 // FIND USER
 router.get("/users/:id", isAuth.sessionToken, userController.user);
 
 // UPLOAD PHOTO PROFILE
-router.post("/profile/upload", userController.uploadPhoto);
-
-// GET PHOTO PROFILE
-router.get("/profile/:name", userController.getPhoto);
+router.post(
+  "/profile/upload",
+  isAuth.sessionToken,
+  upload.any(),
+  saveMedia,
+  userController.uploadPhoto
+);
 
 // EDIT USER INFOS
 router.put("/profile/edit", isAuth.sessionToken, userController.edit);

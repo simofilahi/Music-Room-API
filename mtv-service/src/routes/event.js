@@ -3,6 +3,9 @@ const router = express.Router();
 const eventController = require("../controllers/event");
 const authMiddleware = require("../middleware/isAuth");
 const accessMiddleware = require("../middleware/access");
+const multer = require("multer");
+const saveMedia = require("../middleware/saveMedia");
+const upload = multer();
 
 // CREATE AN EVENT
 router.post("/events", authMiddleware.isAuth, eventController.createEvent);
@@ -77,14 +80,9 @@ router.get("/events/:id/tracks/play", eventController.playTrack);
 router.post(
   "/events/:id/upload",
   authMiddleware.isAuth,
+  upload.any(),
+  saveMedia,
   eventController.uploadPhoto
-);
-
-// GET EVENT PHOTO
-router.get(
-  "/events/photos/:name",
-  authMiddleware.isAuth,
-  eventController.getPhoto
 );
 
 module.exports = router;

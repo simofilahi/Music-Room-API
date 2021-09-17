@@ -16,6 +16,7 @@
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
+    "form-data": "^4.0.0",
     "jest": "^27.0.5",
     "jsonwebtoken": "^8.5.1",
     "mongodb": "^3.6.8",
