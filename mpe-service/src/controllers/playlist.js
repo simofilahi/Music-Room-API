@@ -2,8 +2,6 @@ const Playlist = require("../models/PlayList");
 const asyncHandler = require("../helper/asyncHandler");
 const axios = require("axios");
 const ErrorResponse = require("../helper/ErrorResponse");
-const uploadPhoto = require("../middleware/uploads");
-const path = require("path");
 
 // @DESC CREATE A PLAYLIST
 // @ROUTE POST /api/playlists
@@ -253,6 +251,7 @@ exports.uploadPhoto = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { id: playListId } = req.params;
   const { id: ownerId } = req.user;
+  const { url } = req.media;
 
   // VERIFY IF THE USER WHO OWNED THE PLAYLIST OR NOT
   const isOwner = await Playlist.findOne({ _id: playListId, ownerId: ownerId });
@@ -261,19 +260,6 @@ exports.uploadPhoto = asyncHandler(async (req, res, next) => {
     return next(
       new ErrorResponse({ status: 403, message: "forbidden operation" })
     );
-
-  // UPLOAD PHOTO
-  await uploadPhoto(req, res);
-
-  // VERIFY FILE
-  if (!req.file)
-    return res
-      .status(400)
-      .send({ status: false, message: "please upload a photo" });
-
-  var url = `${req.protocol}://${req.get("host")}/api/playlists/photos/${
-    req.file.filename
-  }`;
 
   // UPDATE PHOTO URL
   const playlist = await Playlist.findOneAndUpdate(
@@ -290,29 +276,4 @@ exports.uploadPhoto = asyncHandler(async (req, res, next) => {
 
   // SEND RESPONSE
   res.status(200).send({ succes: true, data: playlist });
-});
-
-//@DESC DOWNLOAD A PHOTO
-//@ROUTE GET /api/playlist/:name
-//@ACCESS PUBLIC
-exports.getPhoto = asyncHandler(async (req, res, next) => {
-  // VARIABLE DESTRUCTION
-  const { name: fileName } = req.params;
-
-  // FIND PATH OF PHOTO
-  const filePath = path.join(
-    path.dirname(require.main.filename),
-    "public",
-    "uploads",
-    fileName
-  );
-
-  // SEND FILE
-  res.download(filePath, (err) => {
-    if (err) {
-      res
-        .status(500)
-        .send({ status: false, message: "File can not be downloaded " });
-    }
-  });
 });

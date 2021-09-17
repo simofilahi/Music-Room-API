@@ -3,6 +3,9 @@ const router = express.Router();
 const playListController = require("../controllers/playlist");
 const authMiddleware = require("../middleware/isAuth");
 const accessMiddleware = require("../middleware/access");
+const multer = require("multer");
+const saveMedia = require("../middleware/saveMedia");
+const upload = multer();
 
 // CREATE PLAYLIST
 router.post("/playlists", authMiddleware.isAuth, playListController.create);
@@ -62,10 +65,9 @@ router.delete(
 router.post(
   "/playlists/:id/upload",
   authMiddleware.isAuth,
+  upload.any(),
+  saveMedia,
   playListController.uploadPhoto
 );
-
-// GET PLAYLIST PHOTO
-router.get("/playlists/photos/:name", playListController.getPhoto);
 
 module.exports = router;
