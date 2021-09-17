@@ -169,3 +169,38 @@ spec:
         #   image: mongo
         #   ports:
         #     - containerPort: 27017
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sms-depl
+  labels:
+    app: sms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sms
+  template:
+    metadata:
+      labels:
+        app: sms
+    spec:
+      volumes:
+        - name: sms-storage
+          persistentVolumeClaim:
+            claimName: sms-pv-claim
+      containers:
+        - name: sms
+          image: sms-image
+          ports:
+            - containerPort: 400
+          volumeMounts:
+            - mountPath: "/app/public/uploads"
+              name: sms-storage
+        # - name: mongodb
+        #   image: mongo
+        #   ports:
+        #     - containerPort: 27017
