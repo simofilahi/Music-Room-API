@@ -23,7 +23,7 @@ router.get("/users/search", userController.userSearch);
 router.get("/users/:id", isAuth.sessionToken, userController.user);
 
 // UPLOAD PHOTO PROFILE
-router.post("/profile/upload", isAuth.sessionToken, userController.uploadPhoto);
+router.post("/profile/upload", userController.uploadPhoto);
 
 // GET PHOTO PROFILE
 router.get("/profile/:name", userController.getPhoto);
