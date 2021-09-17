@@ -7,7 +7,6 @@ const EventObject = require("../utils/eventObject");
 const EventStore = require("../utils/eventStore");
 const path = require("path");
 const mongoose = require("mongoose");
-const uploadPhoto = require("../middleware/upload");
 
 // @DESC CREATE AN EVENT
 // @ROUTE GET /api/events
@@ -360,6 +359,7 @@ exports.uploadPhoto = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { id: eventId } = req.params;
   const { id: ownerId } = req.user;
+  const { url } = req.media;
 
   // VERIFY IF THE USER WHO OWNED THE EVENT OR NOT
   const isOwner = await EventModel.findOne({ _id: eventId, ownerId: ownerId });
@@ -368,19 +368,6 @@ exports.uploadPhoto = asyncHandler(async (req, res, next) => {
     return next(
       new ErrorResponse({ status: 403, message: "Forbidden operation" })
     );
-
-  // UPLOAD PHOTO
-  await uploadPhoto(req, res);
-
-  // VERIFY FILE
-  if (!req.file)
-    return res
-      .status(400)
-      .send({ status: false, message: "Please upload a photo" });
-
-  var url = `${req.protocol}://${req.get("host")}/api/events/photos/${
-    req.file.filename
-  }`;
 
   // UPDATE PHOTO URL
   const event = await EventModel.findOneAndUpdate(
@@ -395,29 +382,4 @@ exports.uploadPhoto = asyncHandler(async (req, res, next) => {
 
   // SEND RESPONSE
   res.status(200).send({ succes: true, data: event });
-});
-
-//@DESC DOWNLOAD A PHOTO
-//@ROUTE GET /api/events/:name
-//@ACCESS PUBLIC
-exports.getPhoto = asyncHandler(async (req, res, next) => {
-  // VARIABLE DESTRUCTION
-  const { name: fileName } = req.params;
-
-  // FIND PATH OF PHOTO
-  const filePath = path.join(
-    path.dirname(require.main.filename),
-    "public",
-    "uploads",
-    fileName
-  );
-
-  // SEND FILE
-  res.download(filePath, (err) => {
-    if (err) {
-      res
-        .status(500)
-        .send({ status: false, message: "File can not be downloaded " });
-    }
-  });
 });

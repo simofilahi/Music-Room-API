@@ -6,10 +6,12 @@ const maxSize = 1024 * 1024 * 5;
 const storage = multer.diskStorage({
   // FILE STORAGE DESTINATION
   destination: function (req, file, cb) {
-    cb(
-      null,
-      path.join(path.dirname(require.main.filename), "public", "uploads")
+    const dirPath = path.join(
+      path.dirname(require.main.filename),
+      "public",
+      "uploads"
     );
+    cb(null, dirPath);
   },
   //   FILE NAME AND EXTENTION
   filename: function (req, file, cb) {
