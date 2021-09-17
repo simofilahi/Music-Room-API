@@ -11,4 +11,7 @@ router.get("/users/:id", eventController.users);
 // GET TRACK INFO
 router.get("/tracks/:id", eventController.getTrackInfos);
 
+// GET TRACK INFO
+router.post("/media", eventController.upload);
+
 module.exports = router;

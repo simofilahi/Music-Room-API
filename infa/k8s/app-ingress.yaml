@@ -1,4 +1,4 @@
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ingress-myservice
@@ -13,19 +13,35 @@ spec:
       - path: /api/playlists
         pathType: Prefix
         backend:
-          serviceName: mpe-service
-          servicePort: 4002
+          service:
+            name: mpe-service
+            port:
+              number: 4002
       - path: /api/events
         pathType: Prefix
         backend:
-          serviceName: mtv-service
-          servicePort: 4003
+           service:
+            name: mtv-service
+            port:
+              number: 4003
       - path: /api/tracks
         pathType: Prefix
         backend:
-          serviceName: tracks-service
-          servicePort: 4005
+          service:
+            name: tracks-service
+            port:
+              number: 4005
       - path: /api/*
+        pathType: Prefix
         backend:
-          serviceName: users-service
-          servicePort: 4004
+          service:
+            name: users-service
+            port:
+              number: 4004
+      - path: /api/media/
+        pathType: Prefix
+        backend:
+          service:
+            name: sms-service
+            port:
+              number: 4006
