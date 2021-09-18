@@ -12,9 +12,9 @@ exports.upload = asyncHandler(async (req, res, next) => {
       .status(400)
       .send({ status: false, message: "please upload a photo" });
 
-  const url = `${req.protocol}://${req.get("host")}/api/media/${
-    req.file.filename
-  }`;
+  const url = `${req.protocol}://${req.headers.host_ip}/api/media/${req.file.filename}`;
+
+  console.log({ url });
 
   // SEND RESPONSE
   res.status(200).send({ succes: true, url: url });

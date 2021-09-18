@@ -90,7 +90,7 @@ metadata:
   name: sms-service
 spec:
   selector:
-    app: tracks
+    app: sms
   ports:
     - protocol: TCP
       port: 4006
