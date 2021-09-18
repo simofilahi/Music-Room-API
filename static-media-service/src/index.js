@@ -32,10 +32,6 @@ const errorHandler = require("./middleware/errorHandler");
 
 app.use("/api", userRoutes, errorHandler);
 
-// app.post("/api/media", (req, res, next) => {
-//   res.send("Yeah");
-// });
-
 const Port = process.env.PORT;
 
 // START SERVER

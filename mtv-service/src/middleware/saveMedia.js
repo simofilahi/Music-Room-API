@@ -14,6 +14,7 @@ const saveMedia = asyncHandler(async (req, res, next) => {
   //   CALL EVENT-BUS ENDPOINT;
   const data = await axios.post(url, formFile, {
     headers: {
+      host_ip: req.get("host"),
       "Content-Type": `multipart/form-data; boundary=${formFile._boundary}`,
     },
   });
