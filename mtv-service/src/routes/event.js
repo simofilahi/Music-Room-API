@@ -19,7 +19,21 @@ router.get("/my-events", authMiddleware.isAuth, eventController.getMyEvents);
 // UPDATE AN EVENT
 router.put("/events/:id", authMiddleware.isAuth, eventController.updateEvent);
 
-// PLAYLIST INVITED USERS
+// GET AN EVENT
+router.get(
+  "/events/:id",
+  authMiddleware.isAuth,
+  accessMiddleware.access,
+  eventController.getOne
+);
+
+// REMOVE AN PLAYLIST
+router.delete(
+  "/events/:id",
+  authMiddleware.isAuth,
+  eventController.remove
+);
+// EVENT INVITED USERS
 router.post(
   "/events/:id/invite",
   authMiddleware.isAuth,

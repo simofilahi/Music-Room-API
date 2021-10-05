@@ -70,6 +70,46 @@ exports.getMyEvents = asyncHandler(async (req, res, next) => {
   res.status(200).send({ success: true, data: data });
 });
 
+// @DESC GET AN EVENT
+// @ROUTE GET /api/events/:id
+// @ACCESS PRIVATE
+exports.getOne = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { id: eventId } = req.params;
+  const { id: userId } = req.user;
+
+  const event = await EventModel.findOne({ _id: eventId, ownerId: userId });
+
+  // VERIFY IF THAT USER HAS ACCESS TO EDIT THIS EVENT
+  if (!event)
+    return next(
+      new ErrorResponse({ status: 404, message: "not found" })
+    );
+
+  // SEND RESPONSE
+  res.status(200).send({ success: true, data: event });
+});
+
+// @DESC DELETE AN EVENT
+// @ROUTE DELETE /api/events/:id
+// @ACCESS PRIVATE
+exports.remove = asyncHandler(async (req, res, next) => {
+  // VARIABLE DESTRUCTION
+  const { id: eventId } = req.params;
+  const { id: userId } = req.user;
+
+  const event = await EventModel.remove({ _id: eventId, ownerId: userId });
+
+  // VERIFY IF THAT USER HAS ACCESS TO EDIT THIS EVENT
+  if (!event)
+    return next(
+      new ErrorResponse({ status: 404, message: "not found" })
+    );
+
+  // SEND RESPONSE
+  res.status(200).send({ success: true, data: event });
+});
+
 // @DESC UPDATE AN EVENT
 // @ROUTE PUT /api/events/:id
 // @ACCESS PRIVATE
