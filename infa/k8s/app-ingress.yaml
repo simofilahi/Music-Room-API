@@ -17,7 +17,21 @@ spec:
             name: mpe-service
             port:
               number: 4002
+      - path: /api/my-playlists
+        pathType: Prefix
+        backend:
+          service:
+            name: mpe-service
+            port:
+              number: 4002
       - path: /api/events
+        pathType: Prefix
+        backend:
+           service:
+            name: mtv-service
+            port:
+              number: 4003
+      - path: /api/my-events
         pathType: Prefix
         backend:
            service:
