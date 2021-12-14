@@ -1,12 +1,8 @@
-const EventEmitter = require("events");
 const fs = require("fs");
 const path = require("path");
 const Throttle = require("throttle");
 const mm = require("music-metadata");
-const axios = require("axios");
-const { throws } = require("assert");
-const ffmpeg = require("fluent-ffmpeg");
-const { PassThrough, Stream } = require("stream");
+const downloadFile = require("../utils/downloadTrack");
 
 function Event(eventId = 0, playlist = []) {
   this.eventId = eventId;
@@ -14,8 +10,8 @@ function Event(eventId = 0, playlist = []) {
   this.consumers = [];
   this.currTrack = "";
   this.currTrackIndex = 0;
-  //   event: new EventEmitter(),
 
+  // ADD JOINED USER TO THE STREAM
   this.addConsumer = function (consumer) {
     try {
       this.consumers.push(consumer);
@@ -24,6 +20,7 @@ function Event(eventId = 0, playlist = []) {
     }
   };
 
+  // REMOVE USER FROM THE STREAM
   this.removeConsumer = function (consumer) {
     try {
       this.consumers.delete(consumer);
@@ -32,6 +29,7 @@ function Event(eventId = 0, playlist = []) {
     }
   };
 
+  // GET NEW PLAYLIST
   this.updatePlaylist = function (newPlaylist) {
     try {
       this.playlist = newPlaylist;
@@ -40,15 +38,24 @@ function Event(eventId = 0, playlist = []) {
     }
   };
 
-  this.nextTrack = function () {
+  // Bring next track
+  this.nextTrack = async function () {
     try {
       if (this.currTrackIndex === this.playlist.length) this.currTrackIndex = 0;
-      this.currTrack = path.join(
+      // TRACK OUTPUT DIRECTORY
+      const outputLocationPath = path.join(
         path.dirname(require.main.filename),
         "public",
         "media",
-        this.playlist[this.currTrackIndex].file
+        this.playlist[this.currTrackIndex]._id + ".mp3"
       );
+
+      // TRACK URL
+      this.currTrack = this.playlist[this.currTrackIndex]._id + ".mp3";
+
+      // DOWNLOAD TRACK
+      await downloadFile(currTrack, outputLocationPath);
+
       this.currTrackIndex++;
       this.playTrack();
     } catch {
@@ -56,6 +63,7 @@ function Event(eventId = 0, playlist = []) {
     }
   };
 
+  // GET BIT RATE OF A TRACK
   this.getBitRate = async function () {
     try {
       const metadata = await mm.parseFile(this.currTrack);
@@ -65,12 +73,12 @@ function Event(eventId = 0, playlist = []) {
     }
   };
 
+  // STRART PLAYING TRACK
   this.playTrack = async function () {
     try {
       const bitRate = await this.getBitRate();
       const throttle = new Throttle(bitRate / 8);
       const readable = fs.createReadStream(this.currTrack);
-      const writeable = new PassThrough();
 
       // readable.pipe(writeable);
       readable.pipe(throttle);
@@ -171,7 +179,7 @@ function Event(eventId = 0, playlist = []) {
         path.dirname(require.main.filename),
         "public",
         "media",
-        this.playlist[this.currTrackIndex].file
+        this.playlist[this.currTrackIndex].preview_url + ".mp3"
       );
       this.currTrackIndex++;
       this.playTrack();

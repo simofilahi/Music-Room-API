@@ -2,10 +2,8 @@ const EventModel = require("../models/Event");
 const asyncHandler = require("../helper/asyncHandler");
 const ErrorResponse = require("../helper/ErrorResponse");
 const axios = require("axios");
-const downloadFile = require("../utils/downloadTrack");
 const EventObject = require("../utils/eventObject");
 const EventStore = require("../utils/eventStore");
-const path = require("path");
 const mongoose = require("mongoose");
 
 // @DESC CREATE AN EVENT
@@ -76,15 +74,12 @@ exports.getMyEvents = asyncHandler(async (req, res, next) => {
 exports.getOne = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION
   const { id: eventId } = req.params;
-  const { id: userId } = req.user;
 
-  const event = await EventModel.findOne({ _id: eventId, ownerId: userId });
+  const event = await EventModel.findOne({ _id: eventId });
 
   // VERIFY IF THAT USER HAS ACCESS TO EDIT THIS EVENT
   if (!event)
-    return next(
-      new ErrorResponse({ status: 404, message: "not found" })
-    );
+    return next(new ErrorResponse({ status: 404, message: "not found" }));
 
   // SEND RESPONSE
   res.status(200).send({ success: true, data: event });
@@ -102,9 +97,7 @@ exports.remove = asyncHandler(async (req, res, next) => {
 
   // VERIFY IF THAT USER HAS ACCESS TO EDIT THIS EVENT
   if (!event)
-    return next(
-      new ErrorResponse({ status: 404, message: "not found" })
-    );
+    return next(new ErrorResponse({ status: 404, message: "not found" }));
 
   // SEND RESPONSE
   res.status(200).send({ success: true, data: event });
@@ -199,23 +192,7 @@ exports.addTrack = asyncHandler(async (req, res, next) => {
     `${process.env.EVENT_BUS_SERVICE}/api/tracks/${trackId}`
   );
 
-  // TRACK OUTPUT DIRECTORY
-  const outputLocationPath = path.join(
-    path.dirname(require.main.filename),
-    "public",
-    "media",
-    `${trackId}.mp3`
-  );
-
-  // TRACK URL
-  const url = track.data.data.preview_url;
-
-  // DOWNLOAD TRACK
-  await downloadFile(url, outputLocationPath);
-
-  // ADD AUDIO PATH TO TRACK OBJECT
-  track.data.data.file = `${trackId}.mp3`;
-
+  // METADATA OF THE TRACK
   const { data } = track.data;
 
   // DON'T FORGOT TO DON'T SAVE DUPLICATE OBJECT

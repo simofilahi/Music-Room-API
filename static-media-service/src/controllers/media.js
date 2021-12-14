@@ -2,6 +2,9 @@ const asyncHandler = require("../helper/asyncHandler");
 const uploadPhoto = require("../middleware/upload");
 const path = require("path");
 
+// @DESC UPLOAD A PHOTO
+// @ROUTE POST /api/media/media
+// @ACCESS PRIVATE
 exports.upload = asyncHandler(async (req, res, next) => {
   // UPLOAD PHOTO
   await uploadPhoto(req, res);
@@ -21,7 +24,7 @@ exports.upload = asyncHandler(async (req, res, next) => {
 });
 
 //@DESC DOWNLOAD A PHOTO
-//@ROUTE GET /api/profile/:name
+//@ROUTE GET /api/media/:name
 //@ACCESS PUBLIC
 exports.getMedia = asyncHandler(async (req, res, next) => {
   // VARIABLE DESTRUCTION

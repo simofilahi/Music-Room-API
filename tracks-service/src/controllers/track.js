@@ -55,7 +55,7 @@ exports.getTrack = asyncHandler(async (req, res, next) => {
   const track = await spotifyApi.getTrack(id);
 
   // INCORECT RESPONSE
-  if (tracks.statusCode != 200)
+  if (track.statusCode != 200)
     return next(new ErrorResponse({ status: 500, message: "Internal Error" }));
   // DATA HANDLING
   const data = {
