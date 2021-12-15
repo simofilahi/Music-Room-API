@@ -38,8 +38,8 @@ function Event(eventId = 0, playlist = []) {
     }
   };
 
-  // Bring next track
-  this.nextTrack = async function () {
+  // BRING NEXT TRACK
+  this.getTrack = async function () {
     try {
       if (this.currTrackIndex === this.playlist.length) this.currTrackIndex = 0;
       // TRACK OUTPUT DIRECTORY
@@ -51,13 +51,12 @@ function Event(eventId = 0, playlist = []) {
       );
 
       // TRACK URL
-      this.currTrack = this.playlist[this.currTrackIndex]._id + ".mp3";
+      this.currTrack = outputLocationPath;
 
       // DOWNLOAD TRACK
       await downloadFile(currTrack, outputLocationPath);
 
       this.currTrackIndex++;
-      this.playTrack();
     } catch {
       this.startStreaming();
     }
@@ -76,6 +75,9 @@ function Event(eventId = 0, playlist = []) {
   // STRART PLAYING TRACK
   this.playTrack = async function () {
     try {
+      if (this.currTrack === 0) {
+        await this.getTrack();
+      }
       const bitRate = await this.getBitRate();
       const throttle = new Throttle(bitRate / 8);
       const readable = fs.createReadStream(this.currTrack);
@@ -90,8 +92,8 @@ function Event(eventId = 0, playlist = []) {
       throttle.on(
         "end",
         () => {
-          setTimeout(() => {
-            this.nextTrack();
+          setTimeout(async () => {
+            await this.getTrack();
           });
         },
         1000
@@ -173,21 +175,16 @@ function Event(eventId = 0, playlist = []) {
     }
   };
 
-  this.startStreaming = function () {
+  // START STREAMING MUSIC TO THE JOINED USERS
+  this.startStreaming = async function () {
     try {
-      this.currTrack = path.join(
-        path.dirname(require.main.filename),
-        "public",
-        "media",
-        this.playlist[this.currTrackIndex].preview_url + ".mp3"
-      );
-      this.currTrackIndex++;
       this.playTrack();
     } catch {
       this.startStreaming();
     }
   };
 
+  // BROADCAST TRACK DATA CHNUNKS TO THE USERS
   this.broadcast = function (chunk) {
     try {
       if (chunk) {
